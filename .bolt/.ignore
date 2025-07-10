@@ -15,17 +15,7 @@ src/components/admin/*
 ┃ ┃ ┗ supabase.ts
 ┃ ┣ pages/
 src/pages/admin/*
-┃ ┃ ┣ auth/
-┃ ┃ ┃ ┣ ForgotPassword.tsx
-┃ ┃ ┃ ┣ SignIn.css
-┃ ┃ ┃ ┣ SignIn.tsx
-┃ ┃ ┃ ┗ SignUp.tsx
-┃ ┃ ┣ Dashboard.css
-┃ ┃ ┣ Dashboard.tsx
-┃ ┃ ┣ FlashcardCategory.tsx
-┃ ┃ ┣ Flashcards.css
-┃ ┃ ┣ Flashcards.tsx
-┃ ┃ ┣ FlashcardSingle.tsx
+src/pages/auth/*
 src/pages/Landing.css
 src/pages/Landing.tsx
 src/pages/Pricing.css
