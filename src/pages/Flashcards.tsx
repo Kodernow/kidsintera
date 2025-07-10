@@ -7,7 +7,11 @@ import './Flashcards.css';
 
 type ViewMode = 'manual' | 'camera';
 
-const Flashcards: React.FC = () => {
+interface FlashcardsProps {
+  isEmbeddedInDashboard?: boolean;
+}
+
+const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }) => {
   const [viewMode, setViewMode] = useState<ViewMode>('manual');
   const [selectedCategoryForCamera, setSelectedCategoryForCamera] = useState<string>('');
   const [lastUsedCategory, setLastUsedCategory] = useState<string>('');
@@ -138,19 +142,24 @@ const Flashcards: React.FC = () => {
     }
   };
 
+  // Check if any camera-related feature is enabled
+  const isCameraFeatureEnabled = cameraDetectionEnabled || ocrEnabled || qrCodeEnabled;
+
   return (
     <div className="flashcards-page">
-      <div className="flashcards-header">
-        <Link to="/dashboard" className="back-button">
-          <ArrowLeft size={20} />
-          Back to Dashboard
-        </Link>
-        
-        <h1 className="flashcards-title">🌟 Learning Flashcards 🌟</h1>
-        <p className="flashcards-subtitle">
-          Choose your learning mode: browse categories manually or use AI camera detection!
-        </p>
-      </div>
+      {!isEmbeddedInDashboard && (
+        <div className="flashcards-header">
+          <Link to="/dashboard" className="back-button">
+            <ArrowLeft size={20} />
+            Back to Dashboard
+          </Link>
+          
+          <h1 className="flashcards-title">🌟 Learning Flashcards 🌟</h1>
+          <p className="flashcards-subtitle">
+            Choose your learning mode: browse categories manually or use AI camera detection!
+          </p>
+        </div>
+      )}
 
       {/* Mode Selection */}
       <div className="mode-selection">
@@ -164,7 +173,7 @@ const Flashcards: React.FC = () => {
               setDetectedFlashcard(null);
             }}
           >
-            <Grid size={24} />
+            <Grid size={20} />
             <span>Manual Mode</span>
             <p>Browse categories and cards manually</p>
           </button>
@@ -176,7 +185,7 @@ const Flashcards: React.FC = () => {
               setDetectedFlashcard(null);
             }}
           >
-            <Camera size={24} />
+            <Camera size={20} />
             <span>Camera Mode</span>
             <p>Use AI to detect objects and show cards</p>
           </button>
@@ -226,7 +235,7 @@ const Flashcards: React.FC = () => {
             </div>
           </div>
 
-          <div className="categories-grid">
+          <div className="categories-grid responsive-categories-grid">
             {categories.map(category => {
               const flashcardCount = getFlashcardsByCategory(category.id).length;
               
@@ -234,7 +243,7 @@ const Flashcards: React.FC = () => {
                 <Link
                   key={category.id}
                   to={`/flashcards/${category.id}`}
-                  className="category-card"
+                  className="category-card responsive-category-card"
                   style={{ '--category-color': category.color } as React.CSSProperties}
                 >
                   <span className="category-icon">{category.icon}</span>
@@ -347,7 +356,7 @@ const Flashcards: React.FC = () => {
               </div>
             </div>
             
-            {(cameraDetectionEnabled || ocrEnabled || qrCodeEnabled) && (
+            {isCameraFeatureEnabled && (
               <div className="camera-section">
                 <div className="camera-controls">
                   {!isDetecting ? (
@@ -385,7 +394,15 @@ const Flashcards: React.FC = () => {
                       
                       <button 
                         className="camera-flip-button"
-                        onClick={toggleCameraFlip}
+                        onClick={() => {
+                          // Stop current detection, flip camera, then restart
+                          stopCameraDetection();
+                          toggleCameraFlip();
+                          setTimeout(() => {
+                            const categoryId = selectedCategoryForCamera || lastUsedCategory;
+                            startCameraDetection(categoryId);
+                          }, 1000);
+                        }}
                         title={`Switch to ${cameraFlipped ? 'back' : 'front'} camera`}
                       >
                         <RotateCcw size={16} />

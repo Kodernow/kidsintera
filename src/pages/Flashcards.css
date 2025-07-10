@@ -51,6 +51,28 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Responsive category grid for mobile */
+.responsive-categories-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.responsive-category-card {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  border: 3px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
 .categories-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -248,8 +270,8 @@
 .mode-button {
   background: white;
   border: 3px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 32px 24px;
+  border-radius: 12px;
+  padding: 20px 16px;
   cursor: pointer;
   transition: all 0.3s ease;
   text-align: center;
@@ -257,7 +279,7 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  min-height: 200px;
+  min-height: 140px;
   justify-content: center;
 }
 
@@ -274,14 +296,14 @@
 }
 
 .mode-button span {
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #1f2937;
   margin: 0;
 }
 
 .mode-button p {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   color: #6b7280;
   margin: 0;
   line-height: 1.4;
@@ -710,8 +732,36 @@
   }
   
   .mode-button {
-    min-height: 160px;
-    padding: 24px 20px;
+    min-height: 120px;
+    padding: 16px 12px;
+  }
+  
+  .responsive-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+  }
+  
+  .responsive-category-card {
+    padding: 16px;
+  }
+  
+  .category-icon {
+    font-size: 2rem;
+    margin-bottom: 12px;
+  }
+  
+  .category-name {
+    font-size: 1.125rem;
+    margin-bottom: 6px;
+  }
+  
+  .category-description {
+    font-size: 0.8rem;
+    margin-bottom: 12px;
+  }
+  
+  .category-meta {
+    font-size: 0.7rem;
   }
   
   .categories-grid,
@@ -783,12 +833,40 @@
   }
   
   .mode-button {
-    min-height: 140px;
-    padding: 20px 16px;
+    min-height: 100px;
+    padding: 14px 12px;
   }
   
   .mode-button span {
-    font-size: 1.125rem;
+    font-size: 1rem;
+  }
+  
+  .mode-button p {
+    font-size: 0.75rem;
+  }
+  
+  .responsive-categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  
+  .responsive-category-card {
+    padding: 12px;
+  }
+  
+  .category-icon {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+  }
+  
+  .category-name {
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+  
+  .category-description {
+    font-size: 0.75rem;
+    margin-bottom: 8px;
   }
   
   .camera-settings-panel {
