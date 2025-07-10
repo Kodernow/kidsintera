@@ -716,6 +716,133 @@
   margin-top: 24px;
 }
 
+.detection-status.loading {
+  background-color: #dbeafe;
+  border-color: #93c5fd;
+  color: #1e40af;
+}
+
+.detected-objects {
+  margin-top: 16px;
+}
+
+.detected-objects h4 {
+  margin: 0 0 12px 0;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.objects-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.object-tag {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.text-tag {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.qr-tag {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.detection-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detection-category {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detection-category h5 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.camera-feed-container {
+  margin-top: 20px;
+  text-align: center;
+}
+
+.camera-feed {
+  width: 100%;
+  max-width: 400px;
+  height: 300px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  border: 3px solid #f59e0b;
+  background-color: #1f2937;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.camera-feed-title {
+  margin: 0 0 12px 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.live-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+    
+
 /* Responsive Design */
 @media screen and (max-width: 768px) {
   .compact-settings-grid {
@@ -737,6 +864,9 @@
     padding: 16px;
   }
 }
+
+
+
 
 @media screen and (max-width: 480px) {
   .compact-settings-grid {
