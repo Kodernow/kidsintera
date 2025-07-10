@@ -254,9 +254,10 @@
 .compact-flashcard .flashcard-title {
   font-size: 1.1rem;
   font-weight: 700;
-  margin: 0 0 6px 0;
+  margin: 0;
   color: #1f2937;
   text-align: center;
+  display: inline-block;
 }
 
 .compact-flashcard .flashcard-description {
@@ -270,16 +271,15 @@
 
 .compact-flashcard .flashcard-pronunciation {
   background-color: #f3f4f6;
-  color: #374151;
-  padding: 4px 8px;
-  border-radius: 12px;
+  color: #4b5563;
+  padding: 2px 6px;
+  border-radius: 8px;
   font-size: 0.75rem;
   font-weight: 500;
-  text-align: center;
-  margin: 0 auto 10px;
+  margin-left: 6px;
   display: inline-block;
   font-family: 'Courier New', monospace;
-  max-width: 90%;
+  vertical-align: middle;
 }
 
 /* Responsive category grid for mobile */
@@ -925,9 +925,10 @@
 
 .navigation-buttons {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   justify-content: center;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  margin-top: 20px;
 }
 
 .nav-button {
@@ -936,7 +937,8 @@
   border: 2px solid var(--category-color);
   padding: 12px 20px;
   border-radius: 12px;
-  font-weight: 600;
+  font-weight: 500;
+  font-size: 0.9rem;
   text-decoration: none;
   transition: all 0.3s ease;
   display: inline-flex;
@@ -1571,7 +1573,7 @@
 
 @media screen and (max-width: 480px) {
   .compact-settings-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
     gap: 8px;
   }
   
@@ -1588,5 +1590,28 @@
   }
   .camera-layout {
     grid-template-columns: 1fr;
+  }
+  
+  .navigation-buttons {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .nav-button {
+    width: 100%;
+    justify-content: center;
+    padding: 10px;
+    font-size: 0.85rem;
+  }
+  
+  .compact-flashcard .flashcard-title,
+  .compact-flashcard .flashcard-pronunciation {
+    display: block;
+    margin: 0 auto 6px;
+    text-align: center;
+  }
+  
+  .compact-flashcard .flashcard-pronunciation {
+    margin-left: 0;
   }
 }

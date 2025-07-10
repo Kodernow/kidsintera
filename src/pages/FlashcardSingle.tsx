@@ -171,7 +171,9 @@ const FlashcardSingle: React.FC = () => {
           <h2 className="single-flashcard-title">{flashcard.title}</h2>
           
           {flashcard.description && (
-            <p className="single-flashcard-description">{flashcard.description}</p>
+            <p className="single-flashcard-description">
+              {flashcard.description}
+            </p>
           )}
           
           {flashcard.pronunciation && spellEnabled && (
@@ -209,36 +211,38 @@ const FlashcardSingle: React.FC = () => {
           </div>
           
           <div className="navigation-buttons">
-            {prevCard && (
-              <button
+            <div style={{ display: 'flex', gap: '12px', flexWrap: 'nowrap' }}>
+              {prevCard && (
+                <button
+                  className="nav-button"
+                  onClick={handlePrevious}
+                  style={{ '--category-color': category.color } as React.CSSProperties}
+                >
+                  <SkipBack size={18} />
+                  Previous
+                </button>
+              )}
+              
+              <Link
+                to={`/flashcards/${categoryId}`}
                 className="nav-button"
-                onClick={handlePrevious}
                 style={{ '--category-color': category.color } as React.CSSProperties}
               >
-                <SkipBack size={18} />
-                Previous
-              </button>
-            )}
-            
-            <Link
-              to={`/flashcards/${categoryId}`}
-              className="nav-button"
-              style={{ '--category-color': category.color } as React.CSSProperties}
-            >
-              <Grid size={18} />
-              View All
-            </Link>
-            
-            {nextCard && (
-              <button
-                className="nav-button"
-                onClick={handleNext}
-                style={{ '--category-color': category.color } as React.CSSProperties}
-              >
-                Next
-                <SkipForward size={18} />
-              </button>
-            )}
+                <Grid size={18} />
+                View All
+              </Link>
+              
+              {nextCard && (
+                <button
+                  className="nav-button"
+                  onClick={handleNext}
+                  style={{ '--category-color': category.color } as React.CSSProperties}
+                >
+                  Next
+                  <SkipForward size={18} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
