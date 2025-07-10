@@ -95,7 +95,7 @@ const FlashcardCategory: React.FC = () => {
 
   return (
     <Layout>
-      <div className="flashcards-page responsive-container">
+      <div className="flashcards-page">
         <div className="flashcards-header">
           <Link to="/dashboard" className="back-button">
             <ArrowLeft size={20} />
@@ -108,7 +108,7 @@ const FlashcardCategory: React.FC = () => {
           <p className="flashcards-subtitle">{category.description}</p>
         </div>
 
-        <div className="flashcard-grid responsive-grid">
+        <div className="flashcard-grid">
           {flashcards.map(flashcard => (
             <div
               key={flashcard.id}

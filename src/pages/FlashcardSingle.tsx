@@ -140,7 +140,7 @@ const FlashcardSingle: React.FC = () => {
 
   return (
     <Layout>
-      <div className="flashcards-page responsive-container">
+      <div className="flashcards-page">
         <div className="flashcards-header">
           <Link to={`/flashcards/${categoryId}`} className="back-button">
             <ArrowLeft size={20} />
@@ -156,7 +156,7 @@ const FlashcardSingle: React.FC = () => {
         </div>
 
         <div 
-          className="single-flashcard-container responsive-single-card"
+          className="single-flashcard-container"
           style={{ '--category-color': category.color } as React.CSSProperties}
         >
           <img

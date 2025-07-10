@@ -527,7 +527,7 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const startCameraDetection = async (categoryId?: string) => {
     // Check if any camera feature is enabled
     const isCameraFeatureEnabled = cameraDetectionEnabled || ocrEnabled || qrCodeEnabled;
-    
+
     if (!isCameraFeatureEnabled) {
       toast.error('Please enable at least one camera feature (Object Detection, Text Recognition, or QR Code Scanning) in settings first.');
       return;
@@ -569,17 +569,14 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Improved camera constraints for mobile devices
       let videoConstraints: MediaTrackConstraints = {
         width: { ideal: 640, max: 1280 },
-        height: { ideal: 480, max: 720 },
+        height: { ideal: 480, max: 720 }
       };
 
       // Try environment camera first, fallback to user camera
       if (!cameraFlipped) {
         try {
-          videoConstraints.facingMode = { exact: 'environment' };
-        } catch (error) {
-          console.log('Environment camera not available, using default');
           videoConstraints.facingMode = 'environment';
-        }
+        } catch (error) {}
       } else {
         videoConstraints.facingMode = 'user';
       }
@@ -588,22 +585,24 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       try {
         stream = await navigator.mediaDevices.getUserMedia({ 
           video: videoConstraints
-        });
-      } catch (error) {
-        console.log('Failed with specific constraints, trying fallback');
-        // Fallback with simpler constraints
-        try {
-          stream = await navigator.mediaDevices.getUserMedia({ 
+        }).catch(() => {
+          // If specific constraints fail, try with simpler constraints
+          return navigator.mediaDevices.getUserMedia({
             video: {
               facingMode: cameraFlipped ? 'user' : 'environment'
             }
           });
-        } catch (fallbackError) {
-          console.log('Fallback failed, using any available camera');
-          stream = await navigator.mediaDevices.getUserMedia({ 
+        }).catch(() => {
+          // If that fails too, try with any camera
+          return navigator.mediaDevices.getUserMedia({
             video: true
           });
-        }
+        });
+      } catch (error) {
+        console.error('All camera access attempts failed:', error);
+        toast.error('Could not access camera. Please check permissions and try again.');
+        setIsDetecting(false);
+        return;
       }
       
       setVideoStream(stream);

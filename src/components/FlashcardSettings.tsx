@@ -18,7 +18,7 @@ const FlashcardSettings: React.FC = () => {
 
   return (
     <div className="compact-settings-panel">
-      <h2 className="compact-settings-title">Learning Settings</h2>
+      <h2 className="compact-settings-title">Settings</h2>
       
       <div className="compact-settings-grid">
         <button 
@@ -27,7 +27,7 @@ const FlashcardSettings: React.FC = () => {
           title="Toggle sound effects"
         >
           {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          <span>Sound</span>
+          <span>{window.innerWidth > 480 ? 'Sound' : ''}</span>
         </button>
         
         <button 
@@ -36,7 +36,7 @@ const FlashcardSettings: React.FC = () => {
           title="Toggle spelling pronunciation"
         >
           {spellEnabled ? <Type size={16} /> : <TypeIcon size={16} />}
-          <span>Spelling</span>
+          <span>{window.innerWidth > 480 ? 'Spelling' : ''}</span>
         </button>
         
         <button 
@@ -45,7 +45,7 @@ const FlashcardSettings: React.FC = () => {
           title="Toggle object detection"
         >
           {cameraDetectionEnabled ? <Camera size={16} /> : <CameraOff size={16} />}
-          <span>Objects</span>
+          <span>{window.innerWidth > 480 ? 'Objects' : ''}</span>
         </button>
         
         <button 
@@ -54,7 +54,7 @@ const FlashcardSettings: React.FC = () => {
           title="Toggle text recognition"
         >
           <FileText size={16} />
-          <span>Text</span>
+          <span>{window.innerWidth > 480 ? 'Text' : ''}</span>
         </button>
         
         <button 
@@ -63,7 +63,7 @@ const FlashcardSettings: React.FC = () => {
           title="Toggle QR code scanning"
         >
           <QrCode size={16} />
-          <span>QR Code</span>
+          <span>{window.innerWidth > 480 ? 'QR Code' : ''}</span>
         </button>
       </div>
     </div>
