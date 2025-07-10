@@ -34,7 +34,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <span>Dashboard</span>
         </NavLink>
         
-        
         <NavLink to="/flashcards" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
           <BookOpen size={20} />
           <span>Flashcards</span>
