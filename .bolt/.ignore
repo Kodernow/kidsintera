@@ -1,19 +1,6 @@
 
 public/*
-
 src/components/admin/*
-
-┃ ┃ ┗ FlashcardSettings.tsx
-┃ ┣ context/
-┃ ┃ ┣ AdminContext.tsx
-┃ ┃ ┣ AuthContext.tsx
-┃ ┃ ┣ FlashcardContext.tsx
-┃ ┃ ┣ SubscriptionContext.tsx
-┃ ┃ ┣ ThemeContext.tsx
-┃ ┃ ┗ TodoContext.tsx
-┃ ┣ lib/
-┃ ┃ ┗ supabase.ts
-┃ ┣ pages/
 src/pages/admin/*
 src/pages/auth/*
 src/pages/Landing.css
