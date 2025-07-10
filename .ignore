@@ -1,0 +1,26 @@
+
+public/*
+src/components/admin/*
+src/pages/admin/*
+src/pages/auth/*
+src/pages/Landing.css
+src/pages/Landing.tsx
+src/pages/Pricing.css
+src/pages/Pricing.tsx
+src/pages/Profile.css
+src/pages/Profile.tsx
+src/pages/Settings.css
+src/pages/Settings.tsx
+src/pages/TodoBoard.css
+src/pages/TodoBoard.tsx
+supabase/*
+.env.example
+.env.local.example
+.gitignore
+eslint.config.js
+
+package-lock.json
+# package.json
+# postcss.config.js
+readme.md
+setup-instructions.md
