@@ -752,7 +752,9 @@
     max-width: 100%;
     height: 250px;
   }
-  
+  .camera-flip-button {
+    justify-content: center;
+  }
   .camera-layout {
     grid-template-columns: 1fr;
   }
