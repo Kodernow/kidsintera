@@ -89,7 +89,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }
       stopCameraDetection();
       setTimeout(() => {
         startCameraDetection(categoryId);
-      }, 500);
+      }, 1000);
     }
   };
 

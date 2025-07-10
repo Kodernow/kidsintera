@@ -525,8 +525,11 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   };
 
   const startCameraDetection = async (categoryId?: string) => {
-    if (!cameraDetectionEnabled) {
-      toast.error('Camera detection is disabled. Enable it in settings first.');
+    // Check if any camera feature is enabled
+    const isCameraFeatureEnabled = cameraDetectionEnabled || ocrEnabled || qrCodeEnabled;
+    
+    if (!isCameraFeatureEnabled) {
+      toast.error('Please enable at least one camera feature (Object Detection, Text Recognition, or QR Code Scanning) in settings first.');
       return;
     }
 
@@ -553,7 +556,7 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       modelRef.current = loadedModel;
       
       // Additional check after model loading
-      if (!modelRef.current) {
+      if (!modelRef.current && cameraDetectionEnabled) {
         if (!modelUrl) {
           toast.loading('Loading AI model, please wait...');
         }
@@ -563,20 +566,58 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         return;
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: { 
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: cameraFlipped ? 'user' : 'environment'
-        } 
-      });
+      // Improved camera constraints for mobile devices
+      let videoConstraints: MediaTrackConstraints = {
+        width: { ideal: 640, max: 1280 },
+        height: { ideal: 480, max: 720 },
+      };
+
+      // Try environment camera first, fallback to user camera
+      if (!cameraFlipped) {
+        try {
+          videoConstraints.facingMode = { exact: 'environment' };
+        } catch (error) {
+          console.log('Environment camera not available, using default');
+          videoConstraints.facingMode = 'environment';
+        }
+      } else {
+        videoConstraints.facingMode = 'user';
+      }
+
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          video: videoConstraints
+        });
+      } catch (error) {
+        console.log('Failed with specific constraints, trying fallback');
+        // Fallback with simpler constraints
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: {
+              facingMode: cameraFlipped ? 'user' : 'environment'
+            }
+          });
+        } catch (fallbackError) {
+          console.log('Fallback failed, using any available camera');
+          stream = await navigator.mediaDevices.getUserMedia({ 
+            video: true
+          });
+        }
+      }
       
       setVideoStream(stream);
       setIsDetecting(true);
       
-      const modelType = currentActiveCategoryModelUrl ? 'specialized' : 'general';
+      const modelType = (currentActiveCategoryModelUrl && cameraDetectionEnabled) ? 'specialized' : 'general';
       const categoryName = categoryId ? getCategoryById(categoryId)?.name : 'all categories';
-      toast.success(`Camera detection started for ${categoryName} with ${modelType} AI model!`);
+      
+      const enabledFeatures = [];
+      if (cameraDetectionEnabled) enabledFeatures.push('Object Detection');
+      if (ocrEnabled) enabledFeatures.push('Text Recognition');
+      if (qrCodeEnabled) enabledFeatures.push('QR Code Scanning');
+      
+      toast.success(`Camera started for ${categoryName} with ${enabledFeatures.join(', ')}!`);
 
       // Create video element for detection
       if (!videoRef.current) {
@@ -604,12 +645,28 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       // Start detection loop
       const interval = setInterval(async () => {
         if (video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0) {
-          // Run all detection methods in parallel
-          const [objects, text, qrCodes] = await Promise.all([
-            detectObjects(video),
-            detectText(video),
-            detectQRCodes(video)
-          ]);
+          // Run detection methods based on enabled features
+          const detectionPromises = [];
+          
+          if (cameraDetectionEnabled) {
+            detectionPromises.push(detectObjects(video));
+          } else {
+            detectionPromises.push(Promise.resolve([]));
+          }
+          
+          if (ocrEnabled) {
+            detectionPromises.push(detectText(video));
+          } else {
+            detectionPromises.push(Promise.resolve([]));
+          }
+          
+          if (qrCodeEnabled) {
+            detectionPromises.push(detectQRCodes(video));
+          } else {
+            detectionPromises.push(Promise.resolve([]));
+          }
+          
+          const [objects, text, qrCodes] = await Promise.all(detectionPromises);
           
           setDetectedObjects(objects);
           setDetectedText(text);
@@ -645,7 +702,7 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setDetectionInterval(interval);
     } catch (error) {
       console.error('Error accessing camera:', error);
-      toast.error('Could not access camera. Please check permissions.');
+      toast.error('Could not access camera. Please check permissions and try again.');
       setIsDetecting(false);
     }
   };
