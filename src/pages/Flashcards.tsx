@@ -195,7 +195,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }
 
       {viewMode === 'manual' && (
         <>
-          <FlashcardSettings />
+          <FlashcardSettings viewMode="manual" />
 
           <div className="categories-grid responsive-categories-grid">
             {categories.map(category => {
@@ -248,7 +248,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }
               </div>
             </div>
             
-            <FlashcardSettings />
+            <FlashcardSettings viewMode="camera" />
             
             {isCameraFeatureEnabled && (
               <div className="camera-section">

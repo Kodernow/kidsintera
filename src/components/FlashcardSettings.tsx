@@ -2,7 +2,11 @@ import React from 'react';
 import { useFlashcards } from '../context/FlashcardContext';
 import { Volume2, VolumeX, Type, TypeIcon, Camera, CameraOff, FileText, QrCode } from 'lucide-react';
 
-const FlashcardSettings: React.FC = () => {
+interface FlashcardSettingsProps {
+  viewMode?: 'manual' | 'camera';
+}
+
+const FlashcardSettings: React.FC<FlashcardSettingsProps> = ({ viewMode = 'manual' }) => {
   const { 
     soundEnabled,
     spellEnabled,
@@ -39,32 +43,32 @@ const FlashcardSettings: React.FC = () => {
           <span>{window.innerWidth > 480 ? 'Spelling' : ''}</span>
         </button>
         
-        <button 
+        {viewMode === 'camera' && <button 
           className={`compact-setting-button ${cameraDetectionEnabled ? 'active' : ''}`}
           onClick={toggleCameraDetection}
           title="Toggle object detection"
         >
           {cameraDetectionEnabled ? <Camera size={16} /> : <CameraOff size={16} />}
           <span>{window.innerWidth > 480 ? 'Objects' : ''}</span>
-        </button>
+        </button>}
         
-        <button 
+        {viewMode === 'camera' && <button 
           className={`compact-setting-button ${ocrEnabled ? 'active' : ''}`}
           onClick={toggleOCR}
           title="Toggle text recognition"
         >
           <FileText size={16} />
           <span>{window.innerWidth > 480 ? 'Text' : ''}</span>
-        </button>
+        </button>}
         
-        <button 
+        {viewMode === 'camera' && <button 
           className={`compact-setting-button ${qrCodeEnabled ? 'active' : ''}`}
           onClick={toggleQRCode}
           title="Toggle QR code scanning"
         >
           <QrCode size={16} />
           <span>{window.innerWidth > 480 ? 'QR Code' : ''}</span>
-        </button>
+        </button>}
       </div>
     </div>
   );
