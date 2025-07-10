@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useFlashcards } from '../context/FlashcardContext';
 import { useAdmin } from '../context/AdminContext';
 import { ArrowLeft, Play, Settings, Volume2, VolumeX, Type, TypeIcon, Camera, CameraOff, Eye, EyeOff, Video, RotateCcw, FileText, QrCode, Grid, Target } from 'lucide-react';
+import FlashcardSettings from '../components/FlashcardSettings';
 import './Flashcards.css';
 
 type ViewMode = 'manual' | 'camera';
@@ -194,46 +195,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }
 
       {viewMode === 'manual' && (
         <>
-          <div className="settings-panel">
-            <h2 className="settings-title">
-              <Settings size={24} />
-              Learning Settings
-            </h2>
-            
-            <div className="settings-grid">
-              <div className="setting-item">
-                <div className="setting-info">
-                  <div className="setting-icon" style={{ backgroundColor: soundEnabled ? '#10b981' : '#d1d5db' }}>
-                    {soundEnabled ? <Volume2 size={20} color="white" /> : <VolumeX size={20} color="#6b7280" />}
-                  </div>
-                  <div className="setting-text">
-                    <h4>Sound Effects</h4>
-                    <p>Play sounds when clicking cards</p>
-                  </div>
-                </div>
-                <div 
-                  className={`toggle-switch ${soundEnabled ? 'active' : ''}`}
-                  onClick={toggleSound}
-                />
-              </div>
-              
-              <div className="setting-item">
-                <div className="setting-info">
-                  <div className="setting-icon" style={{ backgroundColor: spellEnabled ? '#8b5cf6' : '#d1d5db' }}>
-                    {spellEnabled ? <Type size={20} color="white" /> : <TypeIcon size={20} color="#6b7280" />}
-                  </div>
-                  <div className="setting-text">
-                    <h4>Show Spelling</h4>
-                    <p>Display pronunciation guides</p>
-                  </div>
-                </div>
-                <div 
-                  className={`toggle-switch ${spellEnabled ? 'active' : ''}`}
-                  onClick={toggleSpell}
-                />
-              </div>
-            </div>
-          </div>
+          <FlashcardSettings />
 
           <div className="categories-grid responsive-categories-grid">
             {categories.map(category => {
@@ -249,10 +211,6 @@ const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }
                   <span className="category-icon">{category.icon}</span>
                   <h3 className="category-name">{category.name}</h3>
                   <p className="category-description">{category.description}</p>
-                  <div className="category-meta">
-                    <span>{flashcardCount} cards</span>
-                    <span>{category.ageGroup}</span>
-                  </div>
                 </Link>
               );
             })}
@@ -290,71 +248,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }
               </div>
             </div>
             
-            <div className="settings-grid">
-              <div className="setting-item">
-                <div className="setting-info">
-                  <div className="setting-icon" style={{ backgroundColor: soundEnabled ? '#10b981' : '#d1d5db' }}>
-                    {soundEnabled ? <Volume2 size={20} color="white" /> : <VolumeX size={20} color="#6b7280" />}
-                  </div>
-                  <div className="setting-text">
-                    <h4>Sound Effects</h4>
-                    <p>Play sounds for detected objects</p>
-                  </div>
-                </div>
-                <div 
-                  className={`toggle-switch ${soundEnabled ? 'active' : ''}`}
-                  onClick={toggleSound}
-                />
-              </div>
-              
-              <div className="setting-item">
-                <div className="setting-info">
-                  <div className="setting-icon" style={{ backgroundColor: cameraDetectionEnabled ? '#f59e0b' : '#d1d5db' }}>
-                    {cameraDetectionEnabled ? <Camera size={20} color="white" /> : <CameraOff size={20} color="#6b7280" />}
-                  </div>
-                  <div className="setting-text">
-                    <h4>Object Detection</h4>
-                    <p>Use camera to detect objects</p>
-                  </div>
-                </div>
-                <div 
-                  className={`toggle-switch ${cameraDetectionEnabled ? 'active' : ''}`}
-                  onClick={toggleCameraDetection}
-                />
-              </div>
-              
-              <div className="setting-item">
-                <div className="setting-info">
-                  <div className="setting-icon" style={{ backgroundColor: ocrEnabled ? '#8b5cf6' : '#d1d5db' }}>
-                    {ocrEnabled ? <FileText size={20} color="white" /> : <FileText size={20} color="#6b7280" />}
-                  </div>
-                  <div className="setting-text">
-                    <h4>Text Recognition</h4>
-                    <p>Detect text in camera view</p>
-                  </div>
-                </div>
-                <div 
-                  className={`toggle-switch ${ocrEnabled ? 'active' : ''}`}
-                  onClick={toggleOCR}
-                />
-              </div>
-              
-              <div className="setting-item">
-                <div className="setting-info">
-                  <div className="setting-icon" style={{ backgroundColor: qrCodeEnabled ? '#10b981' : '#d1d5db' }}>
-                    {qrCodeEnabled ? <QrCode size={20} color="white" /> : <QrCode size={20} color="#6b7280" />}
-                  </div>
-                  <div className="setting-text">
-                    <h4>QR Code Scanning</h4>
-                    <p>Scan QR codes for flashcards</p>
-                  </div>
-                </div>
-                <div 
-                  className={`toggle-switch ${qrCodeEnabled ? 'active' : ''}`}
-                  onClick={toggleQRCode}
-                />
-              </div>
-            </div>
+            <FlashcardSettings />
             
             {isCameraFeatureEnabled && (
               <div className="camera-section">

@@ -51,6 +51,182 @@
   box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
+/* Compact Settings Component */
+.compact-settings-panel {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 24px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.compact-settings-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.compact-settings-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px;
+}
+
+.compact-setting-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background-color: #f9fafb;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+}
+
+.compact-setting-button:hover {
+  border-color: #f59e0b;
+  background-color: #fef3c7;
+  color: #92400e;
+}
+
+.compact-setting-button.active {
+  border-color: #10b981;
+  background-color: #d1fae5;
+  color: #065f46;
+}
+
+.compact-setting-button span {
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+/* Compact Audio Controls for Category and Single Pages */
+.compact-audio-controls {
+  display: flex;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.compact-audio-button {
+  flex: 1;
+  background: linear-gradient(135deg, var(--category-color), color-mix(in srgb, var(--category-color) 80%, black));
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.75rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.compact-audio-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.compact-audio-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.compact-audio-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.compact-audio-button.spell-button {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.compact-audio-button.spell-button:hover {
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* Compact Single Audio Controls */
+.compact-single-audio-controls {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.compact-single-audio-button {
+  background: linear-gradient(135deg, var(--category-color), color-mix(in srgb, var(--category-color) 80%, black));
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.compact-single-audio-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+}
+
+.compact-single-audio-button:active {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
+}
+
+.compact-single-audio-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.compact-single-audio-button.spell-button {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+.compact-single-audio-button.spell-button:hover {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Compact Flashcard Styles */
+.compact-flashcard {
+  background: white;
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-decoration: none;
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
 /* Responsive category grid for mobile */
 .responsive-categories-grid {
   display: grid;
@@ -744,23 +920,18 @@
   .responsive-category-card {
     padding: 16px;
   }
-  
-  .category-icon {
-    font-size: 2rem;
-    margin-bottom: 12px;
+
+  .compact-settings-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
   }
-  
-  .category-name {
-    font-size: 1.125rem;
-    margin-bottom: 6px;
-  }
-  
-  .category-description {
+
+  .compact-setting-button {
+    padding: 12px 8px;
     font-size: 0.8rem;
-    margin-bottom: 12px;
   }
-  
-  .category-meta {
+
+  .compact-setting-button span {
     font-size: 0.7rem;
   }
   
@@ -853,20 +1024,30 @@
   .responsive-category-card {
     padding: 12px;
   }
-  
-  .category-icon {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
+
+  .compact-settings-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
   }
-  
-  .category-name {
-    font-size: 1rem;
-    margin-bottom: 4px;
-  }
-  
-  .category-description {
+
+  .compact-setting-button {
+    padding: 10px 6px;
     font-size: 0.75rem;
-    margin-bottom: 8px;
+  }
+
+  .compact-setting-button span {
+    font-size: 0.65rem;
+  }
+
+  .compact-audio-controls {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .compact-single-audio-controls {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
   }
   
   .camera-settings-panel {
