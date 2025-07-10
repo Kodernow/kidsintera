@@ -51,7 +51,7 @@ const Landing: React.FC = () => {
               onClick={toggleMobileMenu}
             >
               {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </div>
+            </button>
           </nav>
         </div>
       </header>
