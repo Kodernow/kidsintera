@@ -128,14 +128,15 @@ const FlashcardCategory: React.FC = () => {
               </Link>
               
               <h3 className="flashcard-title">{flashcard.title}</h3>
+              
+              {flashcard.description && (
+                <p className="flashcard-description">{flashcard.description.length > 60 ? `${flashcard.description.substring(0, 60)}...` : flashcard.description}</p>
+              )}
+              
               {flashcard.pronunciation && spellEnabled && (
                 <div className="flashcard-pronunciation">
                   /{flashcard.pronunciation}/
                 </div>
-              )}
-              
-              {flashcard.description && (
-                <p className="flashcard-description">{flashcard.description.length > 60 ? `${flashcard.description.substring(0, 60)}...` : flashcard.description}</p>
               )}
               
               <div className="compact-audio-controls">
