@@ -8,7 +8,7 @@ import './Landing.css';
 const Landing: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { plans } = useAdmin();
-
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const activePlans = plans.filter(plan => plan.isActive && plan.billingPeriod === 'monthly');
 
   return (
