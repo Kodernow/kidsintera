@@ -118,7 +118,7 @@ const FlashcardCategory: React.FC = () => {
               <Link to={`/flashcards/${categoryId}/${flashcard.id}`}>
                 <img
                   src={flashcard.imageUrl}
-                  alt={flashcard.title}
+                  alt={`${flashcard.title} flashcard`}
                   className="flashcard-image"
                   onError={(e) => {
                     // Fallback image if the original fails to load
@@ -130,7 +130,7 @@ const FlashcardCategory: React.FC = () => {
               <h3 className="flashcard-title">{flashcard.title}</h3>
               
               {flashcard.description && (
-                <p className="flashcard-description">{flashcard.description}</p>
+                <p className="flashcard-description">{flashcard.description.length > 60 ? `${flashcard.description.substring(0, 60)}...` : flashcard.description}</p>
               )}
               
               {flashcard.pronunciation && spellEnabled && (
@@ -142,7 +142,10 @@ const FlashcardCategory: React.FC = () => {
               <div className="compact-audio-controls">
                 <button
                   className="compact-audio-button"
-                  onClick={() => handlePlaySound(flashcard.soundUrl, flashcard.title)}
+                  onClick={(e) => {
+                    e.preventDefault(); // Prevent navigation
+                    handlePlaySound(flashcard.soundUrl, flashcard.title);
+                  }}
                   disabled={!soundEnabled}
                   style={{ '--category-color': category.color } as React.CSSProperties}
                   title="Play word sound"
@@ -153,6 +156,7 @@ const FlashcardCategory: React.FC = () => {
                 <button
                   className="compact-audio-button spell-button"
                   onClick={() => {
+                    event.preventDefault(); // Prevent navigation
                     if (soundEnabled && spellEnabled) {
                       speakSpelling(flashcard.title);
                     }
