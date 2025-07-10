@@ -221,7 +221,7 @@ const Flashcards: React.FC<FlashcardsProps> = ({ isEmbeddedInDashboard = false }
       {viewMode === 'camera' && (
         <div className="camera-mode-container">
           <div className="camera-settings-panel">
-            <h2 className="settings-title">
+            <h2 className="compact-settings-title">
               <Camera size={24} />
               Camera Detection Settings
             </h2>
