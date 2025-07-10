@@ -1,17 +1,23 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+
+// Contexts
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AdminProvider } from './context/AdminContext';
 import { FlashcardProvider } from './context/FlashcardContext';
 import { SubscriptionProvider } from './context/SubscriptionContext';
 import { TodoProvider } from './context/TodoContext';
+
+// Components & Layouts
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import AdminRoute from './components/admin/AdminRoute';
 import FeatureRoute from './components/auth/FeatureRoute';
 import Layout from './components/layout/Layout';
 import AdminLayout from './components/admin/AdminLayout';
+
+// Pages
 import Landing from './pages/Landing';
 import SignIn from './pages/auth/SignIn';
 import SignUp from './pages/auth/SignUp';
@@ -30,138 +36,121 @@ import FlashcardManagement from './pages/admin/FlashcardManagement';
 import Flashcards from './pages/Flashcards';
 import FlashcardCategory from './pages/FlashcardCategory';
 import FlashcardSingle from './pages/FlashcardSingle';
+
+// Assuming App.css contains global styles, if not used, it can be removed.
 import './App.css';
 
+// Define a type for route configuration for better type safety and readability
+interface RouteConfig {
+  path: string;
+  component: React.ComponentType<any>;
+  isProtected?: boolean;
+  isAdmin?: boolean;
+  feature?: string;
+  layout?: 'user' | 'admin' | 'none';
+  context?: React.ComponentType<{ children: React.ReactNode }>;
+}
+
+/**
+ * Helper function to wrap components with necessary routes, layouts, and contexts.
+ * This centralizes the logic for rendering a route's element, making the Routes definition cleaner.
+ */
+const renderRouteElement = (config: RouteConfig) => {
+  let element: React.ReactNode = <config.component />;
+
+  // Apply specific context provider if defined
+  if (config.context) {
+    const ContextProvider = config.context;
+    element = <ContextProvider>{element}</ContextProvider>;
+  }
+
+  // Apply layout based on configuration
+  if (config.layout === 'user') {
+    element = <Layout>{element}</Layout>;
+  } else if (config.layout === 'admin') {
+    element = <AdminLayout>{element}</AdminLayout>;
+  }
+
+  // Apply feature route protection
+  if (config.feature) {
+    element = <FeatureRoute feature={config.feature}>{element}</FeatureRoute>;
+  }
+
+  // Apply admin route protection
+  if (config.isAdmin) {
+    element = <AdminRoute>{element}</AdminRoute>;
+  }
+
+  // Apply general protected route
+  if (config.isProtected) {
+    element = <ProtectedRoute>{element}</ProtectedRoute>;
+  }
+
+  return element;
+};
+
+// Array defining all application routes with their configurations
+const appRoutesConfig: RouteConfig[] = [
+  // Public routes
+  { path: '/', component: Landing, layout: 'none' },
+  { path: '/pricing', component: Pricing, layout: 'none' },
+  { path: '/auth/signin', component: SignIn, layout: 'none' },
+  { path: '/auth/signup', component: SignUp, layout: 'none' },
+  { path: '/auth/forgot-password', component: ForgotPassword, layout: 'none' },
+
+  // Admin routes
+  { path: '/admin', component: AdminDashboard, isAdmin: true, layout: 'admin' },
+  { path: '/admin/users', component: UserManagement, isAdmin: true, layout: 'admin' },
+  { path: '/admin/plans', component: PlanManagement, isAdmin: true, layout: 'admin' },
+  { path: '/admin/coupons', component: CouponManagement, isAdmin: true, layout: 'admin' },
+  { path: '/admin/categories', component: CategoryManagement, isAdmin: true, layout: 'admin' },
+  { path: '/admin/flashcards', component: FlashcardManagement, isAdmin: true, layout: 'admin' },
+  { path: '/admin/settings', component: Settings, isAdmin: true, layout: 'admin' }, // Settings page can be shared
+
+  // Protected user routes
+  { path: '/dashboard', component: Dashboard, isProtected: true, layout: 'user' },
+  { path: '/todo', component: TodoBoard, isProtected: true, feature: 'todoboardEnabled', layout: 'user' },
+  { path: '/profile', component: Profile, isProtected: true, layout: 'user' },
+  { path: '/settings', component: Settings, isProtected: true, layout: 'user' }, // Settings page can be shared
+  { path: '/flashcards', component: Flashcards, isProtected: true, layout: 'none', context: FlashcardProvider },
+  { path: '/flashcards/:categoryId', component: FlashcardCategory, isProtected: true, layout: 'none', context: FlashcardProvider },
+  { path: '/flashcards/:categoryId/:flashcardId', component: FlashcardSingle, isProtected: true, layout: 'none', context: FlashcardProvider },
+
+  // Catch all route - redirects to home if no other route matches
+  { path: '*', component: () => <Navigate to="/" replace />, layout: 'none' },
+];
+
+/**
+ * AppRoutes component handles the routing logic based on user authentication and roles.
+ * It displays a loading spinner while authentication status is being determined.
+ */
 const AppRoutes: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 dark:border-blue-400"></div>
       </div>
     );
   }
 
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/" element={<Landing />} />
-      <Route path="/pricing" element={<Pricing />} />
-      <Route path="/auth/signin" element={<SignIn />} />
-      <Route path="/auth/signup" element={<SignUp />} />
-      <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-      
-      {/* Admin routes */}
-      <Route path="/admin" element={
-        <AdminRoute>
-          <AdminLayout>
-            <AdminDashboard />
-          </AdminLayout>
-        </AdminRoute>
-      } />
-      <Route path="/admin/users" element={
-        <AdminRoute>
-          <AdminLayout>
-            <UserManagement />
-          </AdminLayout>
-        </AdminRoute>
-      } />
-      <Route path="/admin/plans" element={
-        <AdminRoute>
-          <AdminLayout>
-            <PlanManagement />
-          </AdminLayout>
-        </AdminRoute>
-      } />
-      <Route path="/admin/coupons" element={
-        <AdminRoute>
-          <AdminLayout>
-            <CouponManagement />
-          </AdminLayout>
-        </AdminRoute>
-      } />
-      <Route path="/admin/categories" element={
-        <AdminRoute>
-          <AdminLayout>
-            <CategoryManagement />
-          </AdminLayout>
-        </AdminRoute>
-      } />
-      <Route path="/admin/flashcards" element={
-        <AdminRoute>
-          <AdminLayout>
-            <FlashcardManagement />
-          </AdminLayout>
-        </AdminRoute>
-      } />
-      <Route path="/admin/settings" element={
-        <AdminRoute>
-          <AdminLayout>
-            <Settings />
-          </AdminLayout>
-        </AdminRoute>
-      } />
-      
-      {/* Protected user routes */}
-      <Route path="/dashboard" element={
-        <ProtectedRoute>
-          <Layout>
-            <Dashboard />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/todo" element={
-        <ProtectedRoute>
-          <FeatureRoute feature="todoboardEnabled">
-            <Layout>
-              <TodoBoard />
-            </Layout>
-          </FeatureRoute>
-        </ProtectedRoute>
-      } />
-      <Route path="/profile" element={
-        <ProtectedRoute>
-          <Layout>
-            <Profile />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/settings" element={
-        <ProtectedRoute>
-          <Layout>
-            <Settings />
-          </Layout>
-        </ProtectedRoute>
-      } />
-      <Route path="/flashcards" element={
-        <ProtectedRoute>
-          <FlashcardProvider>
-            <Flashcards />
-          </FlashcardProvider>
-        </ProtectedRoute>
-      } />
-      <Route path="/flashcards/:categoryId" element={
-        <ProtectedRoute>
-          <FlashcardProvider>
-            <FlashcardCategory />
-          </FlashcardProvider>
-        </ProtectedRoute>
-      } />
-      <Route path="/flashcards/:categoryId/:flashcardId" element={
-        <ProtectedRoute>
-          <FlashcardProvider>
-            <FlashcardSingle />
-          </FlashcardProvider>
-        </ProtectedRoute>
-      } />
-      
-      {/* Catch all route */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      {appRoutesConfig.map((route, index) => (
+        <Route
+          key={index} // Using index as key is generally okay for static route configurations
+          path={route.path}
+          element={renderRouteElement(route)}
+        />
+      ))}
     </Routes>
   );
 };
 
+/**
+ * Main App component that sets up all necessary context providers and the router.
+ */
 function App() {
   return (
     <ThemeProvider>
@@ -170,10 +159,11 @@ function App() {
           <FlashcardProvider>
             <SubscriptionProvider>
               <TodoProvider>
-                <Router>
+                <BrowserRouter>
+                  {/* Toaster for displaying notifications */}
                   <Toaster position="top-right" />
                   <AppRoutes />
-                </Router>
+                </BrowserRouter>
               </TodoProvider>
             </SubscriptionProvider>
           </FlashcardProvider>
