@@ -1,0 +1,49 @@
+
+public/*
+
+src/components/admin/*
+
+┃ ┃ ┗ FlashcardSettings.tsx
+┃ ┣ context/
+┃ ┃ ┣ AdminContext.tsx
+┃ ┃ ┣ AuthContext.tsx
+┃ ┃ ┣ FlashcardContext.tsx
+┃ ┃ ┣ SubscriptionContext.tsx
+┃ ┃ ┣ ThemeContext.tsx
+┃ ┃ ┗ TodoContext.tsx
+┃ ┣ lib/
+┃ ┃ ┗ supabase.ts
+┃ ┣ pages/
+src/pages/admin/*
+┃ ┃ ┣ auth/
+┃ ┃ ┃ ┣ ForgotPassword.tsx
+┃ ┃ ┃ ┣ SignIn.css
+┃ ┃ ┃ ┣ SignIn.tsx
+┃ ┃ ┃ ┗ SignUp.tsx
+┃ ┃ ┣ Dashboard.css
+┃ ┃ ┣ Dashboard.tsx
+┃ ┃ ┣ FlashcardCategory.tsx
+┃ ┃ ┣ Flashcards.css
+┃ ┃ ┣ Flashcards.tsx
+┃ ┃ ┣ FlashcardSingle.tsx
+src/pages/Landing.css
+src/pages/Landing.tsx
+src/pages/Pricing.css
+src/pages/Pricing.tsx
+src/pages/Profile.css
+src/pages/Profile.tsx
+src/pages/Settings.css
+src/pages/Settings.tsx
+src/pages/TodoBoard.css
+src/pages/TodoBoard.tsx
+supabase/*
+.env.example
+.env.local.example
+.gitignore
+eslint.config.js
+index.html
+package-lock.json
+# package.json
+# postcss.config.js
+readme.md
+setup-instructions.md
