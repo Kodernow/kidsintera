@@ -34,13 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, toggleSidebar }) => {
           <span>Dashboard</span>
         </NavLink>
         
-        {isFeatureEnabled('todoboardEnabled') && (
-          <NavLink to="/todo" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-            <CheckSquare size={20} />
-            <span>Todo Board</span>
-          </NavLink>
-        )}
-
+        
         <NavLink to="/flashcards" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
           <BookOpen size={20} />
           <span>Flashcards</span>
