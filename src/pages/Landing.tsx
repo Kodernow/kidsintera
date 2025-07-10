@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Menu, X,CheckSquare, Zap, Shield, Users, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { CheckSquare, Zap, Shield, Users, Sparkles, ArrowRight, Check } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAdmin } from '../context/AdminContext';
 import './Landing.css';
@@ -8,7 +8,7 @@ import './Landing.css';
 const Landing: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { plans } = useAdmin();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const activePlans = plans.filter(plan => plan.isActive && plan.billingPeriod === 'monthly');
 
   return (
@@ -20,35 +20,23 @@ const Landing: React.FC = () => {
             <span>TaskFlow</span>
           </Link>
           
-         <div className="desktop-nav landing-nav">
-          <div className="nav-links">
-            <a href="#features" className="nav-link">Features</a>
-            <a href="#pricing" className="nav-link">Pricing</a>
-            <a href="#about" className="nav-link">About</a>
-            <a href="#contact" className="nav-link">Contact</a>
-          </div>
-          <div className="auth-buttons">
-            <Link to="/auth/signin" className="btn-outline">Sign In</Link>
-            <Link to="/auth/signup" className="btn-primary">Get Started</Link>
-          </div>
-        </div>
-        
-        {/* Mobile Hamburger */}
-        <button className="mobile-menu-toggle" onClick={() => setMobileMenuOpen(prev => !prev)}>
-          {mobileMenuOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
-        
-        {/* Mobile Nav */}
-        {mobileMenuOpen && (
-          <div className="mobile-menu">
-            <a href="#features" className="mobile-link">Features</a>
-            <a href="#pricing" className="mobile-link">Pricing</a>
-            <a href="#about" className="mobile-link">About</a>
-            <a href="#contact" className="mobile-link">Contact</a>
-            <Link to="/auth/signin" className="btn-outline mobile-button">Sign In</Link>
-            <Link to="/auth/signup" className="btn-primary mobile-button">Get Started</Link>
-          </div>
-        )}
+          <nav className="landing-nav">
+            <div className="nav-links">
+              <a href="#features" className="nav-link">Features</a>
+              <a href="#pricing" className="nav-link">Pricing</a>
+              <a href="#about" className="nav-link">About</a>
+              <a href="#contact" className="nav-link">Contact</a>
+            </div>
+            
+            <div className="auth-buttons">
+              <Link to="/auth/signin" className="btn-outline">
+                Sign In
+              </Link>
+              <Link to="/auth/signup" className="btn-primary">
+                Get Started
+              </Link>
+            </div>
+          </nav>
         </div>
       </header>
 
