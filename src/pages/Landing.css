@@ -1,3 +1,59 @@
+/* Desktop-only nav */
+.desktop-nav {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* Mobile Menu */
+.mobile-menu {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  position: absolute;
+  top: 80px;
+  right: 0;
+  left: 0;
+  padding: 24px;
+  z-index: 99;
+  border-top: 1px solid var(--border-light);
+}
+
+.mobile-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.125rem;
+}
+
+.mobile-button {
+  width: 100%;
+  text-align: center;
+}
+
+@media screen and (max-width: 768px) {
+  .desktop-nav {
+    display: none;
+  }
+
+  .mobile-menu-toggle {
+    display: block;
+  }
+
+  .mobile-menu {
+    display: flex;
+  }
+}
+
+
 .landing-page {
   min-height: 100vh;
   background: linear-gradient(135deg, var(--primary-50) 0%, var(--secondary-50) 100%);
