@@ -42,6 +42,81 @@
   gap: 32px;
 }
 
+.mobile-menu-button {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: 8px;
+  border-radius: var(--border-radius-md);
+  transition: var(--transition-base);
+}
+
+.mobile-menu-button:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.mobile-nav {
+  display: none;
+  position: fixed;
+  top: 80px;
+  left: 0;
+  right: 0;
+  background: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-light);
+  box-shadow: var(--shadow-lg);
+  z-index: 200;
+  padding: 24px;
+}
+
+.mobile-nav.open {
+  display: block;
+}
+
+.mobile-nav-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.mobile-nav-links {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.mobile-nav-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-light);
+  transition: var(--transition-base);
+}
+
+.mobile-nav-link:hover {
+  color: var(--primary-600);
+}
+
+.mobile-nav-link:last-child {
+  border-bottom: none;
+}
+
+.mobile-auth-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.mobile-auth-buttons .btn-outline,
+.mobile-auth-buttons .btn-primary {
+  text-align: center;
+  padding: 12px 24px;
+}
+
 .nav-links {
   display: flex;
   gap: 24px;
@@ -485,7 +560,18 @@
 
 @media screen and (max-width: 768px) {
   .landing-nav {
+    gap: 16px;
+  }
+  
+  .nav-links,
+  .auth-buttons {
     display: none;
+  }
+  
+  .mobile-menu-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   
   .features-grid {

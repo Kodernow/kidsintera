@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { CheckSquare, Zap, Shield, Users, Sparkles, ArrowRight, Check } from 'lucide-react';
+import { CheckSquare, Zap, Shield, Users, Sparkles, ArrowRight, Check, Menu, X } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useAdmin } from '../context/AdminContext';
 import './Landing.css';
@@ -8,8 +8,17 @@ import './Landing.css';
 const Landing: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   const { plans } = useAdmin();
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
 
   const activePlans = plans.filter(plan => plan.isActive && plan.billingPeriod === 'monthly');
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
 
   return (
     <div className="landing-page">
@@ -36,9 +45,37 @@ const Landing: React.FC = () => {
                 Get Started
               </Link>
             </div>
+            
+            <button 
+              className="mobile-menu-button"
+              onClick={toggleMobileMenu}
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </div>
           </nav>
         </div>
       </header>
+
+      {/* Mobile Navigation */}
+      <nav className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-nav-content">
+          <div className="mobile-nav-links">
+            <a href="#features" className="mobile-nav-link" onClick={closeMobileMenu}>Features</a>
+            <a href="#pricing" className="mobile-nav-link" onClick={closeMobileMenu}>Pricing</a>
+            <a href="#about" className="mobile-nav-link" onClick={closeMobileMenu}>About</a>
+            <a href="#contact" className="mobile-nav-link" onClick={closeMobileMenu}>Contact</a>
+          </div>
+          
+          <div className="mobile-auth-buttons">
+            <Link to="/auth/signin" className="btn-outline" onClick={closeMobileMenu}>
+              Sign In
+            </Link>
+            <Link to="/auth/signup" className="btn-primary" onClick={closeMobileMenu}>
+              Get Started
+            </Link>
+          </div>
+        </div>
+      </nav>
 
       <main>
         <section className="hero-section">
