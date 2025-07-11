@@ -13,7 +13,7 @@ src/pages/Settings.css
 src/pages/Settings.tsx
 src/pages/TodoBoard.css
 src/pages/TodoBoard.tsx
-supabase/*
+#supabase/*
 .env.example
 .env.local.example
 .gitignore
