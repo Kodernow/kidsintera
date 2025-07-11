@@ -2,7 +2,6 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useAdmin } from './AdminContext';
-import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
