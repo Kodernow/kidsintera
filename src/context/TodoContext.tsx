@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, checkTableExists } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 import { Todo, TodoContextType } from '../types';
@@ -23,6 +23,23 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const loadTodos = async () => {
     if (!user) {
       setTodos([]);
+      setLoading(false);
+      return;
+    }
+
+    // Check if the table exists first
+    const tableExists = await checkTableExists('todos');
+    if (!tableExists) {
+      console.warn('todos table does not exist, using localStorage');
+      try {
+        const savedTodos = localStorage.getItem('todos');
+        if (savedTodos) {
+          setTodos(JSON.parse(savedTodos));
+        }
+        toast('Using local todos. Database tables not found.', { icon: '⚠️' });
+      } catch {
+        setTodos([]);
+      }
       setLoading(false);
       return;
     }

@@ -14,10 +14,11 @@ The project works best with Supabase for data storage:
    - Create a new project
    - Wait for the project to be created
 
-2. **Run the SQL Migration:**
+2. **Run the SQL Migration (IMPORTANT - Required Step):**
    - Go to the SQL Editor in your Supabase project
    - Copy the contents of `supabase/migrations/create_required_tables.sql`
    - Run the SQL in the editor
+   - This step is MANDATORY - the app will not work properly without these tables
 
 3. **Update your `.env` file:**
    ```env
@@ -72,5 +73,20 @@ This project is compatible with self-hosted Supabase instances. To set up:
 
 ### If you get database errors:
 1. Check that you've run the SQL migration
+   - This is the most common issue! Make sure you've copied and run the SQL from `supabase/migrations/create_required_tables.sql`
 2. Verify your Supabase URL and keys
 3. Try setting `VITE_ENABLE_LOCALSTORAGE_FALLBACK=true` to use localStorage as fallback
+
+## Troubleshooting "relation does not exist" errors
+
+If you see errors like `relation "public.user_preferences" does not exist`, it means you haven't run the SQL migration script yet. Follow these steps:
+
+1. Go to your Supabase project dashboard
+2. Click on "SQL Editor" in the left sidebar
+3. Create a new query
+4. Copy the ENTIRE contents of `supabase/migrations/create_required_tables.sql`
+5. Paste it into the SQL editor
+6. Click "Run" to execute the SQL
+7. Refresh your application
+
+The application will automatically use localStorage as a fallback until the database tables are created.

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, checkTableExists } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useAdmin } from './AdminContext';
 import toast from 'react-hot-toast';
@@ -85,6 +85,33 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       return;
     }
 
+    // Check if the table exists first
+    const tableExists = await checkTableExists('user_preferences');
+    if (!tableExists) {
+      console.warn('user_preferences table does not exist, using localStorage');
+      try {
+        const savedSound = localStorage.getItem('flashcard_sound_enabled');
+        const savedSpell = localStorage.getItem('flashcard_spell_enabled');
+        const savedCamera = localStorage.getItem('flashcard_camera_enabled');
+        const savedFlipped = localStorage.getItem('flashcard_camera_flipped');
+        const savedOcr = localStorage.getItem('flashcard_ocr_enabled');
+        const savedQr = localStorage.getItem('flashcard_qr_enabled');
+
+        if (savedSound) setSoundEnabled(JSON.parse(savedSound));
+        if (savedSpell) setSpellEnabled(JSON.parse(savedSpell));
+        if (savedCamera) setCameraDetectionEnabled(JSON.parse(savedCamera));
+        if (savedFlipped) setCameraFlipped(JSON.parse(savedFlipped));
+        if (savedOcr) setOcrEnabled(JSON.parse(savedOcr));
+        if (savedQr) setQrCodeEnabled(JSON.parse(savedQr));
+        
+        toast('Using local preferences. Database tables not found.', { icon: '⚠️' });
+      } catch {
+        // Use defaults
+      }
+      setPreferencesLoaded(true);
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from('user_preferences')
@@ -136,6 +163,19 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const savePreferences = async () => {
     if (!user || !preferencesLoaded) return;
 
+    // Check if the table exists first
+    const tableExists = await checkTableExists('user_preferences');
+    if (!tableExists) {
+      // Save to localStorage only
+      localStorage.setItem('flashcard_sound_enabled', JSON.stringify(soundEnabled));
+      localStorage.setItem('flashcard_spell_enabled', JSON.stringify(spellEnabled));
+      localStorage.setItem('flashcard_camera_enabled', JSON.stringify(cameraDetectionEnabled));
+      localStorage.setItem('flashcard_camera_flipped', JSON.stringify(cameraFlipped));
+      localStorage.setItem('flashcard_ocr_enabled', JSON.stringify(ocrEnabled));
+      localStorage.setItem('flashcard_qr_enabled', JSON.stringify(qrCodeEnabled));
+      return;
+    }
+
     try {
       const { error } = await supabase
         .from('user_preferences')
@@ -168,8 +208,8 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       localStorage.setItem('flashcard_camera_flipped', JSON.stringify(cameraFlipped));
       localStorage.setItem('flashcard_ocr_enabled', JSON.stringify(ocrEnabled));
       localStorage.setItem('flashcard_qr_enabled', JSON.stringify(qrCodeEnabled));
-      
-      toast('Preferences saved locally. Will sync when connection is restored.', { icon: '⚠️' });
+
+      toast('Data saved locally. Will sync when connection is restored.', { icon: '⚠️' });
     }
   };
 
