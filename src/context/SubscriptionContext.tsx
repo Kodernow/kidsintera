@@ -71,7 +71,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
             localStorage.setItem(`subscription_${user.id}`, JSON.stringify(defaultSubscription));
           }
         }
-        toast('Using local subscription data. Database tables not found.', { icon: '⚠️' });
       } catch {
         // Use default free plan
         const freePlan = plans.find(plan => plan.name === 'Free');
@@ -99,7 +98,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .from('user_subscriptions')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         throw error;
@@ -155,7 +154,6 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const savedSubscription = localStorage.getItem(`subscription_${user.id}`);
         if (savedSubscription) {
           setCurrentSubscription(JSON.parse(savedSubscription));
-          toast.error('Using offline subscription data. Please check your connection.');
         } else {
           // Create default free subscription
           const freePlan = plans.find(plan => plan.name === 'Free');

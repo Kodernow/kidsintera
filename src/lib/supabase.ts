@@ -37,17 +37,28 @@ export const isSupabaseConfigured = () => {
   );
 };
 
-// Helper function to check if a table exists
+// Helper function to check if a table exists and handle errors gracefully
 export const checkTableExists = async (tableName: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from(tableName)
       .select('*')
-      .limit(1);
+      .limit(1)
+      .maybeSingle();
     
-    return !error;
+    // If no error, table exists
+    if (!error) return true;
+    
+    // Check for specific "relation does not exist" error
+    if (error.code === '42P01' || error.message?.includes('does not exist')) {
+      console.warn(`Table "${tableName}" does not exist in Supabase. Using localStorage fallback.`);
+      return false;
+    }
+    
+    // For other errors, assume table exists but there might be permission issues
+    console.warn(`Error checking table "${tableName}":`, error);
+    return true;
   } catch (error) {
-    console.error(`Error checking if table ${tableName} exists:`, error);
+    console.warn(`Error checking table "${tableName}":`, error);
     return false;
   }
-};

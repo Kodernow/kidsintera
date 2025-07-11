@@ -88,7 +88,6 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     // Check if the table exists first
     const tableExists = await checkTableExists('user_preferences');
     if (!tableExists) {
-      console.warn('user_preferences table does not exist, using localStorage');
       try {
         const savedSound = localStorage.getItem('flashcard_sound_enabled');
         const savedSpell = localStorage.getItem('flashcard_spell_enabled');
@@ -103,8 +102,6 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (savedFlipped) setCameraFlipped(JSON.parse(savedFlipped));
         if (savedOcr) setOcrEnabled(JSON.parse(savedOcr));
         if (savedQr) setQrCodeEnabled(JSON.parse(savedQr));
-        
-        toast('Using local preferences. Database tables not found.', { icon: '⚠️' });
       } catch {
         // Use defaults
       }
@@ -117,7 +114,7 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         .from('user_preferences')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
         throw error;
@@ -149,8 +146,6 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (savedFlipped) setCameraFlipped(JSON.parse(savedFlipped));
         if (savedOcr) setOcrEnabled(JSON.parse(savedOcr));
         if (savedQr) setQrCodeEnabled(JSON.parse(savedQr));
-        
-        toast.error('Using offline preferences. Please check your connection.');
       } catch {
         // Use defaults
       }

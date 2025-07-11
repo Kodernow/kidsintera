@@ -380,7 +380,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCoupons(savedCoupons ? JSON.parse(savedCoupons) : []);
         setUsers(savedUsers ? JSON.parse(savedUsers) : []);
         setCategories(savedCategories ? JSON.parse(savedCategories) : getDefaultCategories());
-        setFlashcards(savedFlashcards ? JSON.parse(savedFlashcards) : getDefaultFlashcards());
         
         toast('Using local data. Database tables not found.', { icon: '⚠️' });
       } catch {
@@ -391,8 +390,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCategories(getDefaultCategories());
         setFlashcards(getDefaultFlashcards());
       }
-      setLoading(false);
-      return;
     }
 
     try {
@@ -439,8 +436,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } catch {
         // Use defaults if localStorage also fails
         setPlans(getDefaultPlans());
-        setCoupons([]);
-    toast.success('Migrated admin data to database');
         setCategories(getDefaultCategories());
         setFlashcards(getDefaultFlashcards());
       }

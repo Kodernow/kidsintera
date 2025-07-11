@@ -31,7 +31,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       // Check if the table exists first
       const tableExists = await checkTableExists('user_preferences');
       if (!tableExists) {
-        console.warn('user_preferences table does not exist, using localStorage');
         const savedTheme = localStorage.getItem('theme');
         if (savedTheme === 'light' || savedTheme === 'dark') {
           setTheme(savedTheme);
@@ -48,7 +47,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           .from('user_preferences')
           .select('theme')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
           throw error;
@@ -63,7 +62,6 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       } catch (error: any) {
         console.error('Error loading theme:', error);
-        toast('Using local theme settings', { icon: 'ℹ️' });
         
         // Fallback to localStorage
         const savedTheme = localStorage.getItem('theme');
