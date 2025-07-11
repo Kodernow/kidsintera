@@ -14,11 +14,14 @@ The project works best with Supabase for data storage:
    - Create a new project
    - Wait for the project to be created
 
-2. **Run the SQL Migration (IMPORTANT - Required Step):**
+2. **🚨 CRITICAL: Run the SQL Migration (REQUIRED STEP):**
    - Go to the SQL Editor in your Supabase project
-   - Copy the contents of `supabase/migrations/create_required_tables.sql`
-   - Run the SQL in the editor
-   - This step is MANDATORY - the app will not work properly without these tables
+   - Click "New Query"
+   - Copy the ENTIRE contents of `supabase/migrations/create_required_tables.sql`
+   - Paste it into the SQL editor
+   - Click "Run" to execute the SQL
+   - ⚠️ This step is MANDATORY - the app will show errors without these tables
+   - You should see "Success. No rows returned" or similar confirmation
 
 3. **Update your `.env` file:**
    ```env
@@ -79,7 +82,9 @@ This project is compatible with self-hosted Supabase instances. To set up:
 
 ## Troubleshooting "relation does not exist" errors
 
-If you see errors like `relation "public.user_preferences" does not exist`, it means you haven't run the SQL migration script yet. Follow these steps:
+If you see errors like `relation "public.user_preferences" does not exist` or `relation "public.admin_data" does not exist`, it means you haven't run the SQL migration script yet. 
+
+**THIS IS THE MOST COMMON ISSUE!** Follow these steps:
 
 1. Go to your Supabase project dashboard
 2. Click on "SQL Editor" in the left sidebar
@@ -87,6 +92,25 @@ If you see errors like `relation "public.user_preferences" does not exist`, it m
 4. Copy the ENTIRE contents of `supabase/migrations/create_required_tables.sql`
 5. Paste it into the SQL editor
 6. Click "Run" to execute the SQL
-7. Refresh your application
+7. Wait for confirmation that the SQL executed successfully
+8. Refresh your application
+
+**Expected Result:** You should see "Success. No rows returned" or similar confirmation message after running the SQL.
 
 The application will automatically use localStorage as a fallback until the database tables are created.
+
+## Verifying Tables Were Created
+
+After running the SQL migration, you can verify the tables were created by:
+
+1. Go to "Table Editor" in your Supabase dashboard
+2. You should see these tables:
+   - `user_preferences`
+   - `admin_data` 
+   - `user_subscriptions`
+   - `todos`
+   - `flashcard_progress`
+   - `user_profiles`
+   - `admin_users`
+
+If you don't see these tables, the SQL migration didn't run successfully. Try running it again.
