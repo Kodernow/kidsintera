@@ -153,8 +153,8 @@ const AppRoutes: React.FC = () => {
  */
 function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
+    <AuthProvider>
+      <ThemeProvider>
         <AdminProvider>
           <FlashcardProvider>
             <SubscriptionProvider>
@@ -168,8 +168,8 @@ function App() {
             </SubscriptionProvider>
           </FlashcardProvider>
         </AdminProvider>
-      </AuthProvider>
-    </ThemeProvider>
+      </ThemeProvider>
+    </AuthProvider>
   );
 }
 
