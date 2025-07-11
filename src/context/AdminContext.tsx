@@ -615,64 +615,6 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       } else {
         setFlashcards(loadFromLocalStorage('admin_flashcards', getDefaultFlashcards()));
       }
-    }
-
-    try {
-      setLoading(true);
-
-      // Load all admin data
-      const adminDataTableExists = await checkTableExists('admin_data');
-      const loadedPlans = adminDataTableExists ? (await supabase.from('admin_data').select('*').eq('data_type', 'plans')).data?.[0]?.data_value || getDefaultPlans() : loadFromLocalStorage('admin_plans', getDefaultPlans());
-      const loadedCoupons = adminDataTableExists ? (await supabase.from('admin_data').select('*').eq('data_type', 'coupons')).data?.[0]?.data_value || [] : loadFromLocalStorage('admin_coupons', []);
-      const loadedUsers = adminDataTableExists ? (await supabase.from('admin_data').select('*').eq('data_type', 'users')).data?.[0]?.data_value || [] : loadFromLocalStorage('admin_users', []);
-
-      setPlans(loadedPlans);
-      setCoupons(loadedCoupons);
-      setUsers(loadedUsers);
-
-      // Load categories from dedicated table
-      const categoriesTableExists = await checkTableExists('flashcard_categories');
-      if (categoriesTableExists) {
-        const { data: loadedCategories, error: categoriesError } = await supabase
-          .from('flashcard_categories')
-          .select('*');
-        if (categoriesError) throw categoriesError;
-        setCategories(loadedCategories.map(c => ({
-          id: c.id,
-          name: c.name,
-          description: c.description,
-          color: c.color,
-          icon: c.icon,
-          ageGroup: c.age_group,
-          modelUrl: c.model_url,
-          createdAt: new Date(c.created_at).getTime()
-        })) || getDefaultCategories());
-      } else {
-        setCategories(loadFromLocalStorage('admin_categories', getDefaultCategories()));
-      }
-
-      // Load flashcards from dedicated table
-      const flashcardsTableExists = await checkTableExists('flashcards');
-      if (flashcardsTableExists) {
-        const { data: loadedFlashcards, error: flashcardsError } = await supabase
-          .from('flashcards')
-          .select('*');
-        if (flashcardsError) throw flashcardsError;
-        setFlashcards(loadedFlashcards.map(f => ({
-          id: f.id,
-          categoryId: f.category_id,
-          title: f.title,
-          description: f.description,
-          imageUrl: f.image_url,
-          soundUrl: f.sound_url,
-          pronunciation: f.pronunciation,
-          spelling: f.spelling,
-          difficulty: f.difficulty,
-          createdAt: new Date(f.created_at).getTime()
-        })) || getDefaultFlashcards());
-      } else {
-        setFlashcards(loadFromLocalStorage('admin_flashcards', getDefaultFlashcards()));
-      }
     } catch (error: any) {
       console.error('Error loading admin data:', error);
       
