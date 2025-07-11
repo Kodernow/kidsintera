@@ -62,3 +62,4 @@ export const checkTableExists = async (tableName: string): Promise<boolean> => {
     console.warn(`Error checking table "${tableName}":`, error);
     return false;
   }
+}
