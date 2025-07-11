@@ -14,7 +14,15 @@ The project works best with Supabase for data storage:
    - Create a new project
    - Wait for the project to be created
 
-2. **🚨 CRITICAL: Run the SQL Migration (REQUIRED STEP):**
+2. **Create Admin User in Supabase Auth (REQUIRED):**
+   - Go to Authentication > Users in your Supabase dashboard
+   - Click "Add user"
+   - Email: `admin@admin.com`
+   - Password: `admin123` (or your preferred password)
+   - Click "Add user"
+   - ⚠️ This step must be done BEFORE running the SQL migration
+
+3. **🚨 CRITICAL: Run the SQL Migration (REQUIRED STEP):**
    - Go to the SQL Editor in your Supabase project
    - Click "New Query"
    - Copy the ENTIRE contents of `supabase/migrations/create_required_tables.sql`
@@ -23,14 +31,20 @@ The project works best with Supabase for data storage:
    - ⚠️ This step is MANDATORY - the app will show errors without these tables
    - You should see "Success. No rows returned" or similar confirmation
 
-3. **Update your `.env` file:**
+4. **Set Admin User as Admin (REQUIRED):**
+   - After running the SQL migration, go to Table Editor > user_profiles
+   - Find the row for your admin user (admin@admin.com)
+   - Set `is_admin` column to `true`
+   - Click Save
+
+5. **Update your `.env` file:**
    ```env
    VITE_SUPABASE_URL=your-project-url
    VITE_SUPABASE_ANON_KEY=your-anon-key
    VITE_ENABLE_LOCALSTORAGE_FALLBACK=true
    ```
 
-4. **Features that work with Supabase:**
+6. **Features that work with Supabase:**
    - ✅ Todo management with cloud sync
    - ✅ Flashcard learning with AI detection
    - ✅ Admin panel with data persistence
