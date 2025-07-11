@@ -31,6 +31,10 @@ The project works best with Supabase for data storage:
    - ⚠️ This step is MANDATORY - the app will show errors without these tables
    - You should see "Success. No rows returned" or similar confirmation
 
+6. **🚨 CRITICAL: Run the Flashcard Tables SQL Migration (REQUIRED STEP):**
+   - Copy the ENTIRE contents of `supabase/migrations/add_flashcard_tables.sql`
+   - Paste it into the SQL editor and click "Run".
+
 4. **Set Admin User as Admin (REQUIRED):**
    - After running the SQL migration, go to Table Editor > user_profiles
    - Find the row for your admin user (admin@admin.com)
@@ -121,6 +125,8 @@ After running the SQL migration, you can verify the tables were created by:
 2. You should see these tables:
    - `user_preferences`
    - `admin_data` 
+   - `flashcard_categories`
+   - `flashcards`
    - `user_subscriptions`
    - `todos`
    - `flashcard_progress`

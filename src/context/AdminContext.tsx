@@ -358,6 +358,131 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       },
     ];
 
+  // Save admin data to Supabase
+  const saveGenericAdminData = async (dataType: string, data: any) => {
+    if (!user || !isAdmin(user.email || '')) return;
+
+    // Check if the table exists first
+    const tableExists = await checkTableExists('admin_data');
+    if (!tableExists) {
+      // Save to localStorage only
+      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('admin_data')
+        .upsert({
+          data_type: dataType,
+          data_key: 'default',
+          data_value: data
+        });
+
+      if (error) throw error;
+
+      // Also save to localStorage as backup
+      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
+    } catch (error: any) {
+      console.error(`Error saving ${dataType}:`, error);
+      
+      // Save to localStorage as fallback
+      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
+      toast('Data saved locally. Will sync when connection is restored.', { icon: '⚠️' });
+    }
+  };
+
+  // Helper function to save categories to their dedicated table
+  const saveCategoriesToSupabase = async (data: FlashcardCategory[]) => {
+    if (!user || !isAdmin(user.email || '')) return;
+
+    const tableExists = await checkTableExists('flashcard_categories');
+    if (!tableExists) {
+      localStorage.setItem('admin_categories', JSON.stringify(data));
+      return;
+    }
+
+    try {
+      // Delete existing and insert new to handle updates/deletes simply for now
+      // In a real app, you'd do more granular upserts/deletes
+      await supabase.from('flashcard_categories').delete().neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      const { error } = await supabase.from('flashcard_categories').insert(data.map(c => ({
+          id: c.id,
+          name: c.name,
+          description: c.description,
+          color: c.color,
+          icon: c.icon,
+          age_group: c.ageGroup,
+          model_url: c.modelUrl,
+          created_at: new Date(c.createdAt).toISOString()
+      })));
+
+      if (error) throw error;
+      localStorage.setItem('admin_categories', JSON.stringify(data));
+    } catch (error: any) {
+      console.error('Error saving categories:', error);
+      localStorage.setItem('admin_categories', JSON.stringify(data));
+      toast('Categories saved locally. Will sync when connection is restored.', { icon: '⚠️' });
+    }
+  };
+
+  // Helper function to save flashcards to their dedicated table
+  const saveFlashcardsToSupabase = async (data: Flashcard[]) => {
+    if (!user || !isAdmin(user.email || '')) return;
+
+    const tableExists = await checkTableExists('flashcards');
+    if (!tableExists) {
+      // Save to localStorage only
+      localStorage.setItem('admin_flashcards', JSON.stringify(data));
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('flashcards')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all
+      if (error) throw error;
+
+      const { error: insertError } = await supabase.from('flashcards').insert(data.map(f => ({
+          id: f.id,
+          category_id: f.categoryId,
+          title: f.title,
+          description: f.description,
+          image_url: f.imageUrl,
+          sound_url: f.soundUrl,
+          pronunciation: f.pronunciation,
+          spelling: f.spelling,
+          difficulty: f.difficulty,
+          created_at: new Date(f.createdAt).toISOString()
+      })));
+
+      if (insertError) throw insertError;
+      localStorage.setItem('admin_flashcards', JSON.stringify(data));
+    } catch (error: any) {
+      console.error('Error saving flashcards:', error);
+      localStorage.setItem('admin_flashcards', JSON.stringify(data));
+      toast('Flashcards saved locally. Will sync when connection is restored.', { icon: '⚠️' });
+    }
+  };
+
+  // Generic save function (now calls specific helpers)
+  const saveAdminData = async (dataType: string, data: any) => {
+    if (dataType === 'categories') {
+      await saveCategoriesToSupabase(data);
+    } else if (dataType === 'flashcards') {
+      await saveFlashcardsToSupabase(data);
+    } else {
+      await saveGenericAdminData(dataType, data);
+    }
+  };
+
+  // Helper to load data from localStorage
+  const loadFromLocalStorage = (key: string, defaultValue: any) => {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : defaultValue;
+  };
+
   // Load admin data from Supabase
   const loadAdminData = async () => {
     if (!user || !isAdmin(user.email || '')) {
@@ -394,87 +519,72 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     try {
       setLoading(true);
-      
+
       // Load all admin data
-      const { data: adminData, error } = await supabase
-        .from('admin_data')
-        .select('*');
-
-      if (error) throw error;
-
-      // Parse admin data
-      const loadedPlans = adminData?.find(item => item.data_type === 'plans')?.data_value || getDefaultPlans();
-      const loadedCoupons = adminData?.find(item => item.data_type === 'coupons')?.data_value || [];
-      const loadedUsers = adminData?.find(item => item.data_type === 'users')?.data_value || [];
-      const loadedCategories = adminData?.find(item => item.data_type === 'categories')?.data_value || getDefaultCategories();
-      const loadedFlashcards = adminData?.find(item => item.data_type === 'flashcards')?.data_value || getDefaultFlashcards();
+      const adminDataTableExists = await checkTableExists('admin_data');
+      const loadedPlans = adminDataTableExists ? (await supabase.from('admin_data').select('*').eq('data_type', 'plans')).data?.[0]?.data_value || getDefaultPlans() : loadFromLocalStorage('admin_plans', getDefaultPlans());
+      const loadedCoupons = adminDataTableExists ? (await supabase.from('admin_data').select('*').eq('data_type', 'coupons')).data?.[0]?.data_value || [] : loadFromLocalStorage('admin_coupons', []);
+      const loadedUsers = adminDataTableExists ? (await supabase.from('admin_data').select('*').eq('data_type', 'users')).data?.[0]?.data_value || [] : loadFromLocalStorage('admin_users', []);
 
       setPlans(loadedPlans);
       setCoupons(loadedCoupons);
       setUsers(loadedUsers);
-      setCategories(loadedCategories);
-      setFlashcards(loadedFlashcards);
 
+      // Load categories from dedicated table
+      const categoriesTableExists = await checkTableExists('flashcard_categories');
+      if (categoriesTableExists) {
+        const { data: loadedCategories, error: categoriesError } = await supabase
+          .from('flashcard_categories')
+          .select('*');
+        if (categoriesError) throw categoriesError;
+        setCategories(loadedCategories.map(c => ({
+          id: c.id,
+          name: c.name,
+          description: c.description,
+          color: c.color,
+          icon: c.icon,
+          ageGroup: c.age_group,
+          modelUrl: c.model_url,
+          createdAt: new Date(c.created_at).getTime()
+        })) || getDefaultCategories());
+      } else {
+        setCategories(loadFromLocalStorage('admin_categories', getDefaultCategories()));
+      }
+
+      // Load flashcards from dedicated table
+      const flashcardsTableExists = await checkTableExists('flashcards');
+      if (flashcardsTableExists) {
+        const { data: loadedFlashcards, error: flashcardsError } = await supabase
+          .from('flashcards')
+          .select('*');
+        if (flashcardsError) throw flashcardsError;
+        setFlashcards(loadedFlashcards.map(f => ({
+          id: f.id,
+          categoryId: f.category_id,
+          title: f.title,
+          description: f.description,
+          imageUrl: f.image_url,
+          soundUrl: f.sound_url,
+          pronunciation: f.pronunciation,
+          spelling: f.spelling,
+          difficulty: f.difficulty,
+          createdAt: new Date(f.created_at).getTime()
+        })) || getDefaultFlashcards());
+      } else {
+        setFlashcards(loadFromLocalStorage('admin_flashcards', getDefaultFlashcards()));
+      }
     } catch (error: any) {
       console.error('Error loading admin data:', error);
       
       // Fallback to localStorage
-      try {
-        const savedPlans = localStorage.getItem('admin_plans');
-        const savedCoupons = localStorage.getItem('admin_coupons');
-        const savedUsers = localStorage.getItem('admin_users');
-        const savedCategories = localStorage.getItem('admin_categories');
-        const savedFlashcards = localStorage.getItem('admin_flashcards');
-
-        setPlans(savedPlans ? JSON.parse(savedPlans) : getDefaultPlans());
-        setCoupons(savedCoupons ? JSON.parse(savedCoupons) : []);
-        setUsers(savedUsers ? JSON.parse(savedUsers) : []);
-        setCategories(savedCategories ? JSON.parse(savedCategories) : getDefaultCategories());
-        setFlashcards(savedFlashcards ? JSON.parse(savedFlashcards) : getDefaultFlashcards());
-        
-        toast.error('Using offline admin data. Please check your connection.');
-      } catch {
-        // Use defaults if localStorage also fails
-        setPlans(getDefaultPlans());
-        setCategories(getDefaultCategories());
-        setFlashcards(getDefaultFlashcards());
-      }
+      setPlans(loadFromLocalStorage('admin_plans', getDefaultPlans()));
+      setCoupons(loadFromLocalStorage('admin_coupons', []));
+      setUsers(loadFromLocalStorage('admin_users', []));
+      setCategories(loadFromLocalStorage('admin_categories', getDefaultCategories()));
+      setFlashcards(loadFromLocalStorage('admin_flashcards', getDefaultFlashcards()));
+      toast.error('Using offline admin data. Please check your connection.');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // Save admin data to Supabase
-  const saveAdminData = async (dataType: string, data: any) => {
-    if (!user || !isAdmin(user.email || '')) return;
-
-    // Check if the table exists first
-    const tableExists = await checkTableExists('admin_data');
-    if (!tableExists) {
-      // Save to localStorage only
-      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
-      return;
-    }
-
-    try {
-      const { error } = await supabase
-        .from('admin_data')
-        .upsert({
-          data_type: dataType,
-          data_key: 'default',
-          data_value: data
-        });
-
-      if (error) throw error;
-
-      // Also save to localStorage as backup
-      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
-    } catch (error: any) {
-      console.error(`Error saving ${dataType}:`, error);
-      
-      // Save to localStorage as fallback
-      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
-      toast('Data saved locally. Will sync when connection is restored.', { icon: '⚠️' });
     }
   };
 
@@ -487,19 +597,32 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         { key: 'admin_plans', dataType: 'plans', data: plans },
         { key: 'admin_coupons', dataType: 'coupons', data: coupons },
         { key: 'admin_users', dataType: 'users', data: users },
-        { key: 'admin_categories', dataType: 'categories', data: categories },
-        { key: 'admin_flashcards', dataType: 'flashcards', data: flashcards },
       ];
 
       for (const migration of migrations) {
         const localData = localStorage.getItem(migration.key);
         if (localData) {
           const parsedData = JSON.parse(localData);
-          await saveAdminData(migration.dataType, parsedData);
+          await saveGenericAdminData(migration.dataType, parsedData);
           localStorage.removeItem(migration.key);
         }
       }
       
+      // Migrate categories
+      const localCategories = localStorage.getItem('admin_categories');
+      if (localCategories) {
+        const parsedCategories = JSON.parse(localCategories);
+        await saveCategoriesToSupabase(parsedCategories);
+        localStorage.removeItem('admin_categories');
+      }
+
+      // Migrate flashcards
+      const localFlashcards = localStorage.getItem('admin_flashcards');
+      if (localFlashcards) {
+        const parsedFlashcards = JSON.parse(localFlashcards);
+        await saveFlashcardsToSupabase(parsedFlashcards);
+        localStorage.removeItem('admin_flashcards');
+      }
       toast.success('Migrated admin data to cloud storage');
     } catch (error) {
       console.error('Error migrating admin data:', error);
@@ -597,8 +720,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: Date.now(),
     };
     const updatedCategories = [...categories, newCategory];
-    setCategories(updatedCategories);
-    saveAdminData('categories', updatedCategories);
+    setCategories(updatedCategories); // Update local state
+    saveCategoriesToSupabase(updatedCategories); // Persist to Supabase
     toast.success('Category added successfully');
   };
 
@@ -606,21 +729,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updatedCategories = categories.map(category =>
         category.id === id ? { ...category, ...updates } : category
     );
-    setCategories(updatedCategories);
-    saveAdminData('categories', updatedCategories);
+    setCategories(updatedCategories); // Update local state
+    saveCategoriesToSupabase(updatedCategories); // Persist to Supabase
     toast.success('Category updated successfully');
   };
 
-  const deleteCategory = (id: string) => {
+  const deleteCategory = async (id: string) => { // Make async to await flashcard deletion
+    // Delete all flashcards in this category first
+    const flashcardsTableExists = await checkTableExists('flashcards');
+    if (flashcardsTableExists) {
+        await supabase.from('flashcards').delete().eq('category_id', id);
+    }
+
     // Also delete all flashcards in this category
     const updatedFlashcards = flashcards.filter(flashcard => flashcard.categoryId !== id);
     const updatedCategories = categories.filter(category => category.id !== id);
     
-    setFlashcards(updatedFlashcards);
-    setCategories(updatedCategories);
-    
-    saveAdminData('flashcards', updatedFlashcards);
-    saveAdminData('categories', updatedCategories);
+    setFlashcards(updatedFlashcards); // Update local state
+    setCategories(updatedCategories); // Update local state
+    saveFlashcardsToSupabase(updatedFlashcards); // Persist to Supabase
+    saveCategoriesToSupabase(updatedCategories); // Persist to Supabase
     toast.success('Category and associated flashcards deleted successfully');
   };
 
@@ -635,9 +763,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: uuidv4(),
       createdAt: Date.now(),
     };
-    const updatedFlashcards = [...flashcards, newFlashcard];
-    setFlashcards(updatedFlashcards);
-    saveAdminData('flashcards', updatedFlashcards);
+    const updatedFlashcards = [...flashcards, newFlashcard]; // Update local state
+    setFlashcards(updatedFlashcards); 
+    saveFlashcardsToSupabase(updatedFlashcards); // Persist to Supabase
     toast.success('Flashcard added successfully');
   };
 
@@ -645,15 +773,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     const updatedFlashcards = flashcards.map(flashcard =>
         flashcard.id === id ? { ...flashcard, ...updates } : flashcard
     );
-    setFlashcards(updatedFlashcards);
-    saveAdminData('flashcards', updatedFlashcards);
+    setFlashcards(updatedFlashcards); // Update local state
+    saveFlashcardsToSupabase(updatedFlashcards); // Persist to Supabase
     toast.success('Flashcard updated successfully');
   };
 
   const deleteFlashcard = (id: string) => {
     const updatedFlashcards = flashcards.filter(flashcard => flashcard.id !== id);
-    setFlashcards(updatedFlashcards);
-    saveAdminData('flashcards', updatedFlashcards);
+    setFlashcards(updatedFlashcards); // Update local state
+    saveFlashcardsToSupabase(updatedFlashcards); // Persist to Supabase
     toast.success('Flashcard deleted successfully');
   };
 
