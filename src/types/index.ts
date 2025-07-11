@@ -118,3 +118,31 @@ export interface Flashcard {
   difficulty: 'easy' | 'medium' | 'hard';
   createdAt: number;
 }
+
+interface TodoContextType {
+  todos: Todo[];
+  loading: boolean;
+  addTodo: (todo: Omit<Todo, 'id' | 'createdAt'>) => void;
+  updateTodo: (id: string, updates: Partial<Todo>) => void;
+  deleteTodo: (id: string) => void;
+  getTodosByStatus: (status: TodoStatus) => Todo[];
+  moveTodoToStatus: (id: string, newStatus: TodoStatus) => void;
+  loadTodos: () => Promise<void>;
+}
+
+interface AdminContextType {
+  loading: boolean;
+  // Plans
+  plans: Plan[];
+}
+
+interface SubscriptionContextType {
+  loading: boolean;
+  currentSubscription: UserSubscription | null;
+  currentPlan: Plan | null;
+  availablePlans: Plan[];
+  applyCoupon: (couponCode: string, planId: string) => Promise<{ discountedPrice: number; coupon: Coupon } | null>;
+  upgradePlan: (planId: string, couponId?: string) => Promise<void>;
+  cancelSubscription: () => Promise<void>;
+  isFeatureEnabled: (feature: keyof Plan['features']) => boolean;
+}
