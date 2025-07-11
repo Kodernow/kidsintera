@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Plan, UserSubscription, Coupon } from '../types';
 import { useAuth } from './AuthContext';
 import { useAdmin } from './AdminContext';
-import { supabase } from '../lib/supabase';
+import { supabase, checkTableExists } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface SubscriptionContextType {
@@ -41,6 +41,54 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const loadSubscription = async () => {
     if (!user) {
       setCurrentSubscription(null);
+      setLoading(false);
+      return;
+    }
+
+    // Check if the table exists first
+    const tableExists = await checkTableExists('user_subscriptions');
+    if (!tableExists) {
+      console.warn('user_subscriptions table does not exist, using localStorage');
+      try {
+        const savedSubscription = localStorage.getItem(`subscription_${user.id}`);
+        if (savedSubscription) {
+          setCurrentSubscription(JSON.parse(savedSubscription));
+        } else {
+          // Create default free subscription
+          const freePlan = plans.find(plan => plan.name === 'Free');
+          if (freePlan) {
+            const defaultSubscription: UserSubscription = {
+              id: `sub_${user.id}`,
+              userId: user.id,
+              planId: freePlan.id,
+              status: 'active',
+              startDate: Date.now(),
+              endDate: Date.now() + (365 * 24 * 60 * 60 * 1000), // 1 year
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            };
+            setCurrentSubscription(defaultSubscription);
+            localStorage.setItem(`subscription_${user.id}`, JSON.stringify(defaultSubscription));
+          }
+        }
+        toast('Using local subscription data. Database tables not found.', { icon: '⚠️' });
+      } catch {
+        // Use default free plan
+        const freePlan = plans.find(plan => plan.name === 'Free');
+        if (freePlan) {
+          const defaultSubscription: UserSubscription = {
+            id: `sub_${user.id}`,
+            userId: user.id,
+            planId: freePlan.id,
+            status: 'active',
+            startDate: Date.now(),
+            endDate: Date.now() + (365 * 24 * 60 * 60 * 1000), // 1 year
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          setCurrentSubscription(defaultSubscription);
+        }
+      }
       setLoading(false);
       return;
     }

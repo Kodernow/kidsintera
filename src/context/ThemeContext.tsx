@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, checkTableExists } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
 
@@ -28,6 +28,21 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Load theme from Supabase or localStorage
   const loadTheme = async () => {
     if (user) {
+      // Check if the table exists first
+      const tableExists = await checkTableExists('user_preferences');
+      if (!tableExists) {
+        console.warn('user_preferences table does not exist, using localStorage');
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'light' || savedTheme === 'dark') {
+          setTheme(savedTheme);
+        } else {
+          const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          setTheme(systemTheme);
+        }
+        setThemeLoaded(true);
+        return;
+      }
+      
       try {
         const { data, error } = await supabase
           .from('user_preferences')
@@ -75,6 +90,13 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Save theme to Supabase and localStorage
   const saveTheme = async (newTheme: Theme) => {
     if (user) {
+      // Check if the table exists first
+      const tableExists = await checkTableExists('user_preferences');
+      if (!tableExists) {
+        localStorage.setItem('theme', newTheme);
+        return;
+      }
+      
       try {
         await supabase
           .from('user_preferences')

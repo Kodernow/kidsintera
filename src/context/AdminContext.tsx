@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, checkTableExists } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { Plan, Coupon, UserProfile, UserStats, FlashcardCategory, Flashcard } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -365,6 +365,36 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return;
     }
 
+    // Check if the table exists first
+    const tableExists = await checkTableExists('admin_data');
+    if (!tableExists) {
+      console.warn('admin_data table does not exist, using localStorage');
+      try {
+        const savedPlans = localStorage.getItem('admin_plans');
+        const savedCoupons = localStorage.getItem('admin_coupons');
+        const savedUsers = localStorage.getItem('admin_users');
+        const savedCategories = localStorage.getItem('admin_categories');
+        const savedFlashcards = localStorage.getItem('admin_flashcards');
+
+        setPlans(savedPlans ? JSON.parse(savedPlans) : getDefaultPlans());
+        setCoupons(savedCoupons ? JSON.parse(savedCoupons) : []);
+        setUsers(savedUsers ? JSON.parse(savedUsers) : []);
+        setCategories(savedCategories ? JSON.parse(savedCategories) : getDefaultCategories());
+        setFlashcards(savedFlashcards ? JSON.parse(savedFlashcards) : getDefaultFlashcards());
+        
+        toast('Using local data. Database tables not found.', { icon: '⚠️' });
+      } catch {
+        // Use defaults if localStorage also fails
+        setPlans(getDefaultPlans());
+        setCoupons([]);
+        setUsers([]);
+        setCategories(getDefaultCategories());
+        setFlashcards(getDefaultFlashcards());
+      }
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       
@@ -422,6 +452,14 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Save admin data to Supabase
   const saveAdminData = async (dataType: string, data: any) => {
     if (!user || !isAdmin(user.email || '')) return;
+
+    // Check if the table exists first
+    const tableExists = await checkTableExists('admin_data');
+    if (!tableExists) {
+      // Save to localStorage only
+      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
+      return;
+    }
 
     try {
       const { error } = await supabase
