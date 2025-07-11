@@ -410,7 +410,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         // Use defaults if localStorage also fails
         setPlans(getDefaultPlans());
         setCoupons([]);
-        setUsers([]);
+    toast.success('Migrated admin data to database');
         setCategories(getDefaultCategories());
         setFlashcards(getDefaultFlashcards());
       }
@@ -441,7 +441,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       
       // Save to localStorage as fallback
       localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
-      toast.warning('Data saved locally. Will sync when connection is restored.');
+      toast('Data saved locally. Will sync when connection is restored.', { icon: '⚠️' });
     }
   };
 

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef } from 'r
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 import { useAdmin } from './AdminContext';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
@@ -169,7 +170,7 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       localStorage.setItem('flashcard_ocr_enabled', JSON.stringify(ocrEnabled));
       localStorage.setItem('flashcard_qr_enabled', JSON.stringify(qrCodeEnabled));
       
-      toast.warning('Preferences saved locally. Will sync when connection is restored.');
+      toast('Preferences saved locally. Will sync when connection is restored.', { icon: '⚠️' });
     }
   };
 
@@ -200,7 +201,7 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         
         // Remove from localStorage after successful migration
         migrations.forEach(key => localStorage.removeItem(key));
-        toast.success('Migrated flashcard preferences to cloud storage');
+        toast.success('Migrated flashcard preferences to database');
       }
     } catch (error) {
       console.error('Error migrating preferences:', error);

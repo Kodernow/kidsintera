@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Plan, UserSubscription, Coupon } from '../types';
 import { useAuth } from './AuthContext';
 import { useAdmin } from './AdminContext';
+import { supabase } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
 interface SubscriptionContextType {
@@ -289,7 +290,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Also save to localStorage as backup
       localStorage.setItem(`subscription_${user?.id}`, JSON.stringify(updatedSubscription));
       
-      toast.success('Subscription cancelled successfully');
+      toast('Data saved locally. Will sync when connection is restored.', { icon: '⚠️' });
     } catch (error: any) {
       console.error('Error cancelling subscription:', error);
       toast.error('Failed to cancel subscription');

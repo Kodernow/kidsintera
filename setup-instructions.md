@@ -1,74 +1,67 @@
 # Database Setup Instructions
 
 ## Current Project Status
-Your project is designed to work **without a database** for core functionality. It uses:
-- **localStorage** for todos, flashcards, admin data, and user preferences
+Your project is designed to work with **Supabase** for data storage. It uses:
+- **Supabase** for todos, flashcards, admin data, and user preferences
+- **localStorage** as fallback when offline
 - **Supabase Auth** for user authentication (optional)
 
-## Option 1: Run Without Database (Recommended)
-The project works perfectly without any database setup:
+## Option 1: Run With Supabase (Recommended)
+The project works best with Supabase for data storage:
+
+1. **Create a Supabase Project:**
+   - Go to [supabase.com](https://supabase.com) and sign up or log in
+   - Create a new project
+   - Wait for the project to be created
+
+2. **Run the SQL Migration:**
+   - Go to the SQL Editor in your Supabase project
+   - Copy the contents of `supabase/migrations/create_required_tables.sql`
+   - Run the SQL in the editor
+
+3. **Update your `.env` file:**
+   ```env
+   VITE_SUPABASE_URL=your-project-url
+   VITE_SUPABASE_ANON_KEY=your-anon-key
+   VITE_ENABLE_LOCALSTORAGE_FALLBACK=true
+   ```
+
+4. **Features that work with Supabase:**
+   - ✅ Todo management with cloud sync
+   - ✅ Flashcard learning with AI detection
+   - ✅ Admin panel with data persistence
+   - ✅ Theme settings synced across devices
+   - ✅ User authentication and profiles
+
+## Option 2: Run Without Database (Fallback)
+
+The project can still work without Supabase by using localStorage:
 
 1. **Update your `.env` file:**
-```env
-VITE_SUPABASE_URL=https://placeholder.supabase.co
-VITE_SUPABASE_ANON_KEY=placeholder-key
-```
+   ```env
+   VITE_SUPABASE_URL=https://placeholder.supabase.co
+   VITE_SUPABASE_ANON_KEY=placeholder-key
+   VITE_ENABLE_LOCALSTORAGE_FALLBACK=true
+   ```
 
-2. **Features that work without database:**
-   - ✅ Todo management (localStorage)
-   - ✅ Flashcard learning with AI detection
-   - ✅ Admin panel (localStorage)
-   - ✅ Theme settings
-   - ✅ All core functionality
-
-3. **Authentication fallback:**
+2. **Authentication fallback:**
    - Hardcoded admin login: `admin@demo.com` / `admin`
    - No user registration, but full app functionality
 
-## Option 2: Set Up Supabase (For Authentication)
+## Self-Hosting Supabase
 
-### Step 1: Create Supabase Project
-1. Go to [supabase.com](https://supabase.com)
-2. Create a new project
-3. Wait for setup to complete
+This project is compatible with self-hosted Supabase instances. To set up:
 
-### Step 2: Run SQL Migrations
-1. Go to SQL Editor in Supabase Dashboard
-2. Run the contents of `supabase/migrations/setup_auth_tables.sql`
-3. Optionally run `supabase/migrations/optional_data_tables.sql` if you want database storage
+1. **Set up a self-hosted Supabase instance** following the [official documentation](https://supabase.com/docs/guides/self-hosting)
 
-### Step 3: Configure Authentication
-1. Go to Authentication > Settings
-2. **Disable email confirmation** (or the app won't work):
-   - Set "Enable email confirmations" to OFF
-3. Configure any social providers if needed
+2. **Run the SQL migration** in your self-hosted instance:
+   - Use the SQL in `supabase/migrations/create_required_tables.sql`
 
-### Step 4: Update Environment Variables
-```env
-VITE_SUPABASE_URL=your-project-url
-VITE_SUPABASE_ANON_KEY=your-anon-key
-```
-
-### Step 5: Update Admin Email (Optional)
-In the SQL migration, change the admin email:
-```sql
-INSERT INTO admin_users (email) 
-VALUES ('your-admin-email@example.com')
-```
-
-## What Each Migration Does
-
-### setup_auth_tables.sql
-- Creates user profiles table
-- Sets up admin users table
-- Configures Row Level Security (RLS)
-- Creates triggers for automatic profile creation
-
-### optional_data_tables.sql (Optional)
-- Creates todos table (alternative to localStorage)
-- Creates user subscriptions table
-- Creates flashcard progress tracking
-- **Note:** You'd need to modify the app code to use these tables
+3. **Update your environment variables** to point to your self-hosted instance:
+   ```env
+   VITE_SUPABASE_URL=your-self-hosted-url
+   VITE_SUPABASE_ANON_KEY=your-anon-key
+   ```
 
 ## Troubleshooting
 
@@ -77,15 +70,7 @@ VALUES ('your-admin-email@example.com')
 2. Verify your Supabase URL and keys
 3. Make sure RLS policies are set correctly
 
-### If you prefer localStorage only:
-- Just use placeholder values in `.env`
-- Everything will work with local storage
-- Use `admin@demo.com` / `admin` for admin access
-
-## Current Data Storage
-- **Todos:** localStorage (`todos`)
-- **Admin data:** localStorage (`admin_plans`, `admin_coupons`, `admin_users`)
-- **User preferences:** localStorage (theme, flashcard settings)
-- **Subscriptions:** localStorage (`subscription_${userId}`)
-
-The app is designed to work offline-first with localStorage, so database setup is optional!
+### If you get database errors:
+1. Check that you've run the SQL migration
+2. Verify your Supabase URL and keys
+3. Try setting `VITE_ENABLE_LOCALSTORAGE_FALLBACK=true` to use localStorage as fallback

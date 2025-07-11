@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
+import toast from 'react-hot-toast';
 
 type Theme = 'light' | 'dark';
 
@@ -47,6 +48,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         }
       } catch (error: any) {
         console.error('Error loading theme:', error);
+        toast('Using local theme settings', { icon: 'ℹ️' });
         
         // Fallback to localStorage
         const savedTheme = localStorage.getItem('theme');

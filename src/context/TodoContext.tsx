@@ -101,7 +101,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
         
         // Remove from localStorage after successful migration
         localStorage.removeItem('todos');
-        toast.success('Migrated todos to cloud storage');
+        toast.success('Migrated todos to database');
         
         // Reload todos from Supabase
         await loadTodos();
