@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 import { Plan, Coupon, UserProfile, UserStats, FlashcardCategory, Flashcard } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
@@ -54,14 +56,16 @@ export const useAdmin = () => {
 };
 
 export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [plans, setPlans] = useState<Plan[]>(() => {
-    const saved = localStorage.getItem('admin_plans');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    
-    // Default plans
-    const defaultPlans: Plan[] = [
+  const { user } = useAuth();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [categories, setCategories] = useState<FlashcardCategory[]>([]);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Default data
+  const getDefaultPlans = (): Plan[] => [
       {
         id: uuidv4(),
         name: 'Free',
@@ -111,29 +115,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         updatedAt: Date.now(),
       },
     ];
-    
-    return defaultPlans;
-  });
 
-  const [coupons, setCoupons] = useState<Coupon[]>(() => {
-    const saved = localStorage.getItem('admin_coupons');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  const [users, setUsers] = useState<UserProfile[]>(() => {
-    const saved = localStorage.getItem('admin_users');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Flashcard Categories
-  const [categories, setCategories] = useState<FlashcardCategory[]>(() => {
-    const saved = localStorage.getItem('admin_categories');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    
-    // Default categories
-    const defaultCategories: FlashcardCategory[] = [
+  const getDefaultCategories = (): FlashcardCategory[] => [
       {
         id: 'animals',
         name: 'Animals',
@@ -172,19 +155,8 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createdAt: Date.now(),
       },
     ];
-    
-    return defaultCategories;
-  });
 
-  // Flashcards
-  const [flashcards, setFlashcards] = useState<Flashcard[]>(() => {
-    const saved = localStorage.getItem('admin_flashcards');
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    
-    // Default flashcards
-    const defaultFlashcards: Flashcard[] = [
+  const getDefaultFlashcards = (): Flashcard[] => [
       // Animals
       {
         id: 'cat',
@@ -385,28 +357,133 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         createdAt: Date.now(),
       },
     ];
-    
-    return defaultFlashcards;
-  });
-  useEffect(() => {
-    localStorage.setItem('admin_plans', JSON.stringify(plans));
-  }, [plans]);
+
+  // Load admin data from Supabase
+  const loadAdminData = async () => {
+    if (!user || !isAdmin(user.email || '')) {
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      
+      // Load all admin data
+      const { data: adminData, error } = await supabase
+        .from('admin_data')
+        .select('*');
+
+      if (error) throw error;
+
+      // Parse admin data
+      const loadedPlans = adminData?.find(item => item.data_type === 'plans')?.data_value || getDefaultPlans();
+      const loadedCoupons = adminData?.find(item => item.data_type === 'coupons')?.data_value || [];
+      const loadedUsers = adminData?.find(item => item.data_type === 'users')?.data_value || [];
+      const loadedCategories = adminData?.find(item => item.data_type === 'categories')?.data_value || getDefaultCategories();
+      const loadedFlashcards = adminData?.find(item => item.data_type === 'flashcards')?.data_value || getDefaultFlashcards();
+
+      setPlans(loadedPlans);
+      setCoupons(loadedCoupons);
+      setUsers(loadedUsers);
+      setCategories(loadedCategories);
+      setFlashcards(loadedFlashcards);
+
+    } catch (error: any) {
+      console.error('Error loading admin data:', error);
+      
+      // Fallback to localStorage
+      try {
+        const savedPlans = localStorage.getItem('admin_plans');
+        const savedCoupons = localStorage.getItem('admin_coupons');
+        const savedUsers = localStorage.getItem('admin_users');
+        const savedCategories = localStorage.getItem('admin_categories');
+        const savedFlashcards = localStorage.getItem('admin_flashcards');
+
+        setPlans(savedPlans ? JSON.parse(savedPlans) : getDefaultPlans());
+        setCoupons(savedCoupons ? JSON.parse(savedCoupons) : []);
+        setUsers(savedUsers ? JSON.parse(savedUsers) : []);
+        setCategories(savedCategories ? JSON.parse(savedCategories) : getDefaultCategories());
+        setFlashcards(savedFlashcards ? JSON.parse(savedFlashcards) : getDefaultFlashcards());
+        
+        toast.error('Using offline admin data. Please check your connection.');
+      } catch {
+        // Use defaults if localStorage also fails
+        setPlans(getDefaultPlans());
+        setCoupons([]);
+        setUsers([]);
+        setCategories(getDefaultCategories());
+        setFlashcards(getDefaultFlashcards());
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save admin data to Supabase
+  const saveAdminData = async (dataType: string, data: any) => {
+    if (!user || !isAdmin(user.email || '')) return;
+
+    try {
+      const { error } = await supabase
+        .from('admin_data')
+        .upsert({
+          data_type: dataType,
+          data_key: 'default',
+          data_value: data
+        });
+
+      if (error) throw error;
+
+      // Also save to localStorage as backup
+      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
+    } catch (error: any) {
+      console.error(`Error saving ${dataType}:`, error);
+      
+      // Save to localStorage as fallback
+      localStorage.setItem(`admin_${dataType}`, JSON.stringify(data));
+      toast.warning('Data saved locally. Will sync when connection is restored.');
+    }
+  };
+
+  // Migrate localStorage data to Supabase
+  const migrateAdminData = async () => {
+    if (!user || !isAdmin(user.email || '')) return;
+
+    try {
+      const migrations = [
+        { key: 'admin_plans', dataType: 'plans', data: plans },
+        { key: 'admin_coupons', dataType: 'coupons', data: coupons },
+        { key: 'admin_users', dataType: 'users', data: users },
+        { key: 'admin_categories', dataType: 'categories', data: categories },
+        { key: 'admin_flashcards', dataType: 'flashcards', data: flashcards },
+      ];
+
+      for (const migration of migrations) {
+        const localData = localStorage.getItem(migration.key);
+        if (localData) {
+          const parsedData = JSON.parse(localData);
+          await saveAdminData(migration.dataType, parsedData);
+          localStorage.removeItem(migration.key);
+        }
+      }
+      
+      toast.success('Migrated admin data to cloud storage');
+    } catch (error) {
+      console.error('Error migrating admin data:', error);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem('admin_coupons', JSON.stringify(coupons));
-  }, [coupons]);
+    if (user && isAdmin(user.email || '')) {
+      loadAdminData().then(() => {
+        // Auto-migrate on first load
+        migrateAdminData();
+      });
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
-  useEffect(() => {
-    localStorage.setItem('admin_users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('admin_categories', JSON.stringify(categories));
-  }, [categories]);
-
-  useEffect(() => {
-    localStorage.setItem('admin_flashcards', JSON.stringify(flashcards));
-  }, [flashcards]);
   const addPlan = (plan: Omit<Plan, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newPlan: Plan = {
       ...plan,
@@ -414,21 +491,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    setPlans(prev => [...prev, newPlan]);
+    const updatedPlans = [...plans, newPlan];
+    setPlans(updatedPlans);
+    saveAdminData('plans', updatedPlans);
     toast.success('Plan added successfully');
   };
 
   const updatePlan = (id: string, updates: Partial<Plan>) => {
-    setPlans(prev =>
-      prev.map(plan =>
+    const updatedPlans = plans.map(plan =>
         plan.id === id ? { ...plan, ...updates, updatedAt: Date.now() } : plan
-      )
     );
+    setPlans(updatedPlans);
+    saveAdminData('plans', updatedPlans);
     toast.success('Plan updated successfully');
   };
 
   const deletePlan = (id: string) => {
-    setPlans(prev => prev.filter(plan => plan.id !== id));
+    const updatedPlans = plans.filter(plan => plan.id !== id);
+    setPlans(updatedPlans);
+    saveAdminData('plans', updatedPlans);
     toast.success('Plan deleted successfully');
   };
 
@@ -444,21 +525,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    setCoupons(prev => [...prev, newCoupon]);
+    const updatedCoupons = [...coupons, newCoupon];
+    setCoupons(updatedCoupons);
+    saveAdminData('coupons', updatedCoupons);
     toast.success('Coupon added successfully');
   };
 
   const updateCoupon = (id: string, updates: Partial<Coupon>) => {
-    setCoupons(prev =>
-      prev.map(coupon =>
+    const updatedCoupons = coupons.map(coupon =>
         coupon.id === id ? { ...coupon, ...updates, updatedAt: Date.now() } : coupon
-      )
     );
+    setCoupons(updatedCoupons);
+    saveAdminData('coupons', updatedCoupons);
     toast.success('Coupon updated successfully');
   };
 
   const deleteCoupon = (id: string) => {
-    setCoupons(prev => prev.filter(coupon => coupon.id !== id));
+    const updatedCoupons = coupons.filter(coupon => coupon.id !== id);
+    setCoupons(updatedCoupons);
+    saveAdminData('coupons', updatedCoupons);
     toast.success('Coupon deleted successfully');
   };
 
@@ -478,23 +563,31 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: uuidv4(),
       createdAt: Date.now(),
     };
-    setCategories(prev => [...prev, newCategory]);
+    const updatedCategories = [...categories, newCategory];
+    setCategories(updatedCategories);
+    saveAdminData('categories', updatedCategories);
     toast.success('Category added successfully');
   };
 
   const updateCategory = (id: string, updates: Partial<FlashcardCategory>) => {
-    setCategories(prev =>
-      prev.map(category =>
+    const updatedCategories = categories.map(category =>
         category.id === id ? { ...category, ...updates } : category
-      )
     );
+    setCategories(updatedCategories);
+    saveAdminData('categories', updatedCategories);
     toast.success('Category updated successfully');
   };
 
   const deleteCategory = (id: string) => {
     // Also delete all flashcards in this category
-    setFlashcards(prev => prev.filter(flashcard => flashcard.categoryId !== id));
-    setCategories(prev => prev.filter(category => category.id !== id));
+    const updatedFlashcards = flashcards.filter(flashcard => flashcard.categoryId !== id);
+    const updatedCategories = categories.filter(category => category.id !== id);
+    
+    setFlashcards(updatedFlashcards);
+    setCategories(updatedCategories);
+    
+    saveAdminData('flashcards', updatedFlashcards);
+    saveAdminData('categories', updatedCategories);
     toast.success('Category and associated flashcards deleted successfully');
   };
 
@@ -509,21 +602,25 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       id: uuidv4(),
       createdAt: Date.now(),
     };
-    setFlashcards(prev => [...prev, newFlashcard]);
+    const updatedFlashcards = [...flashcards, newFlashcard];
+    setFlashcards(updatedFlashcards);
+    saveAdminData('flashcards', updatedFlashcards);
     toast.success('Flashcard added successfully');
   };
 
   const updateFlashcard = (id: string, updates: Partial<Flashcard>) => {
-    setFlashcards(prev =>
-      prev.map(flashcard =>
+    const updatedFlashcards = flashcards.map(flashcard =>
         flashcard.id === id ? { ...flashcard, ...updates } : flashcard
-      )
     );
+    setFlashcards(updatedFlashcards);
+    saveAdminData('flashcards', updatedFlashcards);
     toast.success('Flashcard updated successfully');
   };
 
   const deleteFlashcard = (id: string) => {
-    setFlashcards(prev => prev.filter(flashcard => flashcard.id !== id));
+    const updatedFlashcards = flashcards.filter(flashcard => flashcard.id !== id);
+    setFlashcards(updatedFlashcards);
+    saveAdminData('flashcards', updatedFlashcards);
     toast.success('Flashcard deleted successfully');
   };
 
@@ -544,11 +641,11 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   const updateUserStatus = (userId: string, isActive: boolean) => {
-    setUsers(prev =>
-      prev.map(user =>
+    const updatedUsers = users.map(user =>
         user.id === userId ? { ...user, isActive } : user
-      )
     );
+    setUsers(updatedUsers);
+    saveAdminData('users', updatedUsers);
     toast.success(`User ${isActive ? 'activated' : 'deactivated'} successfully`);
   };
 
@@ -564,6 +661,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <AdminContext.Provider
       value={{
+        loading,
         plans,
         addPlan,
         updatePlan,

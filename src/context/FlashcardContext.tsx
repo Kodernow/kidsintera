@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { supabase } from '../lib/supabase';
+import { useAuth } from './AuthContext';
 import { useAdmin } from './AdminContext';
 import toast from 'react-hot-toast';
 import * as tf from '@tensorflow/tfjs';
@@ -50,37 +52,16 @@ export const useFlashcards = () => {
 
 export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { categories, flashcards, getCategoryById, getFlashcardById, getFlashcardsByCategory } = useAdmin();
+  const { user } = useAuth();
   
   // Settings state
-  const [soundEnabled, setSoundEnabled] = useState(() => {
-    const saved = localStorage.getItem('flashcard_sound_enabled');
-    return saved ? JSON.parse(saved) : true;
-  });
-  
-  const [spellEnabled, setSpellEnabled] = useState(() => {
-    const saved = localStorage.getItem('flashcard_spell_enabled');
-    return saved ? JSON.parse(saved) : true;
-  });
-  
-  const [cameraDetectionEnabled, setCameraDetectionEnabled] = useState(() => {
-    const saved = localStorage.getItem('flashcard_camera_enabled');
-    return saved ? JSON.parse(saved) : false;
-  });
-  
-  const [cameraFlipped, setCameraFlipped] = useState(() => {
-    const saved = localStorage.getItem('flashcard_camera_flipped');
-    return saved ? JSON.parse(saved) : false;
-  });
-  
-  const [ocrEnabled, setOcrEnabled] = useState(() => {
-    const saved = localStorage.getItem('flashcard_ocr_enabled');
-    return saved ? JSON.parse(saved) : false;
-  });
-  
-  const [qrCodeEnabled, setQrCodeEnabled] = useState(() => {
-    const saved = localStorage.getItem('flashcard_qr_enabled');
-    return saved ? JSON.parse(saved) : false;
-  });
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const [spellEnabled, setSpellEnabled] = useState(true);
+  const [cameraDetectionEnabled, setCameraDetectionEnabled] = useState(false);
+  const [cameraFlipped, setCameraFlipped] = useState(false);
+  const [ocrEnabled, setOcrEnabled] = useState(false);
+  const [qrCodeEnabled, setQrCodeEnabled] = useState(false);
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false);
   
   // Camera detection state
   const [detectedObjects, setDetectedObjects] = useState<string[]>([]);
@@ -97,30 +78,152 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const modelRef = useRef<cocoSsd.ObjectDetection | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
 
-  // Save settings to localStorage
-  useEffect(() => {
-    localStorage.setItem('flashcard_sound_enabled', JSON.stringify(soundEnabled));
-  }, [soundEnabled]);
+  // Load user preferences from Supabase
+  const loadPreferences = async () => {
+    if (!user) {
+      setPreferencesLoaded(true);
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('user_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw error;
+      }
+
+      if (data) {
+        setSoundEnabled(data.flashcard_sound_enabled ?? true);
+        setSpellEnabled(data.flashcard_spell_enabled ?? true);
+        setCameraDetectionEnabled(data.flashcard_camera_enabled ?? false);
+        setCameraFlipped(data.flashcard_camera_flipped ?? false);
+        setOcrEnabled(data.flashcard_ocr_enabled ?? false);
+        setQrCodeEnabled(data.flashcard_qr_enabled ?? false);
+      }
+    } catch (error: any) {
+      console.error('Error loading preferences:', error);
+      
+      // Fallback to localStorage
+      try {
+        const savedSound = localStorage.getItem('flashcard_sound_enabled');
+        const savedSpell = localStorage.getItem('flashcard_spell_enabled');
+        const savedCamera = localStorage.getItem('flashcard_camera_enabled');
+        const savedFlipped = localStorage.getItem('flashcard_camera_flipped');
+        const savedOcr = localStorage.getItem('flashcard_ocr_enabled');
+        const savedQr = localStorage.getItem('flashcard_qr_enabled');
+
+        if (savedSound) setSoundEnabled(JSON.parse(savedSound));
+        if (savedSpell) setSpellEnabled(JSON.parse(savedSpell));
+        if (savedCamera) setCameraDetectionEnabled(JSON.parse(savedCamera));
+        if (savedFlipped) setCameraFlipped(JSON.parse(savedFlipped));
+        if (savedOcr) setOcrEnabled(JSON.parse(savedOcr));
+        if (savedQr) setQrCodeEnabled(JSON.parse(savedQr));
+        
+        toast.error('Using offline preferences. Please check your connection.');
+      } catch {
+        // Use defaults
+      }
+    } finally {
+      setPreferencesLoaded(true);
+    }
+  };
+
+  // Save preferences to Supabase
+  const savePreferences = async () => {
+    if (!user || !preferencesLoaded) return;
+
+    try {
+      const { error } = await supabase
+        .from('user_preferences')
+        .upsert({
+          user_id: user.id,
+          flashcard_sound_enabled: soundEnabled,
+          flashcard_spell_enabled: spellEnabled,
+          flashcard_camera_enabled: cameraDetectionEnabled,
+          flashcard_camera_flipped: cameraFlipped,
+          flashcard_ocr_enabled: ocrEnabled,
+          flashcard_qr_enabled: qrCodeEnabled,
+        });
+
+      if (error) throw error;
+
+      // Also save to localStorage as backup
+      localStorage.setItem('flashcard_sound_enabled', JSON.stringify(soundEnabled));
+      localStorage.setItem('flashcard_spell_enabled', JSON.stringify(spellEnabled));
+      localStorage.setItem('flashcard_camera_enabled', JSON.stringify(cameraDetectionEnabled));
+      localStorage.setItem('flashcard_camera_flipped', JSON.stringify(cameraFlipped));
+      localStorage.setItem('flashcard_ocr_enabled', JSON.stringify(ocrEnabled));
+      localStorage.setItem('flashcard_qr_enabled', JSON.stringify(qrCodeEnabled));
+    } catch (error: any) {
+      console.error('Error saving preferences:', error);
+      
+      // Save to localStorage as fallback
+      localStorage.setItem('flashcard_sound_enabled', JSON.stringify(soundEnabled));
+      localStorage.setItem('flashcard_spell_enabled', JSON.stringify(spellEnabled));
+      localStorage.setItem('flashcard_camera_enabled', JSON.stringify(cameraDetectionEnabled));
+      localStorage.setItem('flashcard_camera_flipped', JSON.stringify(cameraFlipped));
+      localStorage.setItem('flashcard_ocr_enabled', JSON.stringify(ocrEnabled));
+      localStorage.setItem('flashcard_qr_enabled', JSON.stringify(qrCodeEnabled));
+      
+      toast.warning('Preferences saved locally. Will sync when connection is restored.');
+    }
+  };
+
+  // Migrate localStorage preferences to Supabase
+  const migratePreferences = async () => {
+    if (!user) return;
+
+    try {
+      const migrations = [
+        'flashcard_sound_enabled',
+        'flashcard_spell_enabled',
+        'flashcard_camera_enabled',
+        'flashcard_camera_flipped',
+        'flashcard_ocr_enabled',
+        'flashcard_qr_enabled',
+      ];
+
+      let hasLocalData = false;
+      for (const key of migrations) {
+        if (localStorage.getItem(key)) {
+          hasLocalData = true;
+          break;
+        }
+      }
+
+      if (hasLocalData) {
+        await savePreferences();
+        
+        // Remove from localStorage after successful migration
+        migrations.forEach(key => localStorage.removeItem(key));
+        toast.success('Migrated flashcard preferences to cloud storage');
+      }
+    } catch (error) {
+      console.error('Error migrating preferences:', error);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem('flashcard_spell_enabled', JSON.stringify(spellEnabled));
-  }, [spellEnabled]);
+    if (user) {
+      loadPreferences().then(() => {
+        // Auto-migrate on first load
+        migratePreferences();
+      });
+    } else {
+      setPreferencesLoaded(true);
+    }
+  }, [user]);
 
+  // Save preferences when they change
   useEffect(() => {
-    localStorage.setItem('flashcard_camera_enabled', JSON.stringify(cameraDetectionEnabled));
-  }, [cameraDetectionEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('flashcard_camera_flipped', JSON.stringify(cameraFlipped));
-  }, [cameraFlipped]);
-
-  useEffect(() => {
-    localStorage.setItem('flashcard_ocr_enabled', JSON.stringify(ocrEnabled));
-  }, [ocrEnabled]);
-
-  useEffect(() => {
-    localStorage.setItem('flashcard_qr_enabled', JSON.stringify(qrCodeEnabled));
-  }, [qrCodeEnabled]);
+    if (preferencesLoaded) {
+      savePreferences();
+    }
+  }, [soundEnabled, spellEnabled, cameraDetectionEnabled, cameraFlipped, ocrEnabled, qrCodeEnabled, preferencesLoaded]);
 
 
   // Load TensorFlow.js model
@@ -490,12 +593,10 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   const toggleSound = () => {
     setSoundEnabled(prev => !prev);
-    toast.success(`Sound ${!soundEnabled ? 'enabled' : 'disabled'}`);
   };
 
   const toggleSpell = () => {
     setSpellEnabled(prev => !prev);
-    toast.success(`Spelling ${!spellEnabled ? 'enabled' : 'disabled'}`);
   };
 
   const toggleCameraDetection = () => {
@@ -505,23 +606,18 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     if (!newValue && isDetecting) {
       stopCameraDetection();
     }
-    
-    toast.success(`Camera detection ${newValue ? 'enabled' : 'disabled'}`);
   };
 
   const toggleCameraFlip = () => {
     setCameraFlipped(prev => !prev);
-    toast.success(`Camera ${!cameraFlipped ? 'flipped' : 'normal'}`);
   };
 
   const toggleOCR = () => {
     setOcrEnabled(prev => !prev);
-    toast.success(`Text recognition ${!ocrEnabled ? 'enabled' : 'disabled'}`);
   };
 
   const toggleQRCode = () => {
     setQrCodeEnabled(prev => !prev);
-    toast.success(`QR code scanning ${!qrCodeEnabled ? 'enabled' : 'disabled'}`);
   };
 
   const startCameraDetection = async (categoryId?: string) => {

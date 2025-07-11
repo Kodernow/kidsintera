@@ -28,6 +28,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const { user } = useAuth();
   const { plans, getCouponByCode } = useAdmin();
   const [currentSubscription, setCurrentSubscription] = useState<UserSubscription | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const availablePlans = plans.filter(plan => plan.isActive);
   
@@ -35,12 +36,38 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     ? plans.find(plan => plan.id === currentSubscription.planId) || null
     : plans.find(plan => plan.name === 'Free') || null; // Default to free plan
 
-  useEffect(() => {
-    if (user) {
-      // Load user subscription from localStorage (in real app, this would be from API)
-      const savedSubscription = localStorage.getItem(`subscription_${user.id}`);
-      if (savedSubscription) {
-        setCurrentSubscription(JSON.parse(savedSubscription));
+  // Load subscription from Supabase
+  const loadSubscription = async () => {
+    if (!user) {
+      setCurrentSubscription(null);
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('user_subscriptions')
+        .select('*')
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+        throw error;
+      }
+
+      if (data) {
+        const subscription: UserSubscription = {
+          id: data.id,
+          userId: data.user_id,
+          planId: data.plan_id,
+          status: data.status,
+          startDate: new Date(data.start_date).getTime(),
+          endDate: data.end_date ? new Date(data.end_date).getTime() : Date.now() + (365 * 24 * 60 * 60 * 1000),
+          createdAt: new Date(data.created_at).getTime(),
+          updatedAt: new Date(data.updated_at).getTime(),
+        };
+        setCurrentSubscription(subscription);
       } else {
         // Create default free subscription
         const freePlan = plans.find(plan => plan.name === 'Free');
@@ -55,12 +82,111 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
             createdAt: Date.now(),
             updatedAt: Date.now(),
           };
+          
+          // Save to Supabase
+          await supabase
+            .from('user_subscriptions')
+            .insert({
+              id: defaultSubscription.id,
+              user_id: defaultSubscription.userId,
+              plan_id: defaultSubscription.planId,
+              status: defaultSubscription.status,
+              start_date: new Date(defaultSubscription.startDate).toISOString(),
+              end_date: new Date(defaultSubscription.endDate).toISOString(),
+            });
+          
           setCurrentSubscription(defaultSubscription);
-          localStorage.setItem(`subscription_${user.id}`, JSON.stringify(defaultSubscription));
         }
       }
+    } catch (error: any) {
+      console.error('Error loading subscription:', error);
+      
+      // Fallback to localStorage
+      try {
+        const savedSubscription = localStorage.getItem(`subscription_${user.id}`);
+        if (savedSubscription) {
+          setCurrentSubscription(JSON.parse(savedSubscription));
+          toast.error('Using offline subscription data. Please check your connection.');
+        } else {
+          // Create default free subscription
+          const freePlan = plans.find(plan => plan.name === 'Free');
+          if (freePlan) {
+            const defaultSubscription: UserSubscription = {
+              id: `sub_${user.id}`,
+              userId: user.id,
+              planId: freePlan.id,
+              status: 'active',
+              startDate: Date.now(),
+              endDate: Date.now() + (365 * 24 * 60 * 60 * 1000), // 1 year
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+            };
+            setCurrentSubscription(defaultSubscription);
+            localStorage.setItem(`subscription_${user.id}`, JSON.stringify(defaultSubscription));
+          }
+        }
+      } catch {
+        // Use default free plan
+        const freePlan = plans.find(plan => plan.name === 'Free');
+        if (freePlan) {
+          const defaultSubscription: UserSubscription = {
+            id: `sub_${user.id}`,
+            userId: user.id,
+            planId: freePlan.id,
+            status: 'active',
+            startDate: Date.now(),
+            endDate: Date.now() + (365 * 24 * 60 * 60 * 1000), // 1 year
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+          };
+          setCurrentSubscription(defaultSubscription);
+        }
+      }
+    } finally {
+      setLoading(false);
     }
-  }, [user, plans]);
+  };
+
+  // Migrate localStorage subscription to Supabase
+  const migrateSubscription = async () => {
+    if (!user) return;
+
+    try {
+      const savedSubscription = localStorage.getItem(`subscription_${user.id}`);
+      if (savedSubscription) {
+        const subscription = JSON.parse(savedSubscription);
+        
+        await supabase
+          .from('user_subscriptions')
+          .upsert({
+            id: subscription.id,
+            user_id: subscription.userId,
+            plan_id: subscription.planId,
+            status: subscription.status,
+            start_date: new Date(subscription.startDate).toISOString(),
+            end_date: subscription.endDate ? new Date(subscription.endDate).toISOString() : null,
+          });
+        
+        // Remove from localStorage after successful migration
+        localStorage.removeItem(`subscription_${user.id}`);
+        toast.success('Migrated subscription data to cloud storage');
+      }
+    } catch (error) {
+      console.error('Error migrating subscription:', error);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      loadSubscription().then(() => {
+        // Auto-migrate on first load
+        migrateSubscription();
+      });
+    } else {
+      setCurrentSubscription(null);
+      setLoading(false);
+    }
+  }, [user]);
 
   const applyCoupon = async (couponCode: string, planId: string) => {
     const coupon = getCouponByCode(couponCode);
@@ -98,37 +224,76 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
       return;
     }
 
-    // Create new subscription
-    const newSubscription: UserSubscription = {
-      id: `sub_${user.id}_${Date.now()}`,
-      userId: user.id,
-      planId: plan.id,
-      status: 'active',
-      startDate: Date.now(),
-      endDate: Date.now() + (plan.billingPeriod === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000,
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
+    try {
+      // Create new subscription
+      const newSubscription: UserSubscription = {
+        id: `sub_${user.id}_${Date.now()}`,
+        userId: user.id,
+        planId: plan.id,
+        status: 'active',
+        startDate: Date.now(),
+        endDate: Date.now() + (plan.billingPeriod === 'yearly' ? 365 : 30) * 24 * 60 * 60 * 1000,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+      };
 
-    setCurrentSubscription(newSubscription);
-    localStorage.setItem(`subscription_${user.id}`, JSON.stringify(newSubscription));
-    
-    toast.success(`Successfully upgraded to ${plan.name} plan!`);
+      // Save to Supabase
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .upsert({
+          id: newSubscription.id,
+          user_id: newSubscription.userId,
+          plan_id: newSubscription.planId,
+          status: newSubscription.status,
+          start_date: new Date(newSubscription.startDate).toISOString(),
+          end_date: new Date(newSubscription.endDate).toISOString(),
+        });
+
+      if (error) throw error;
+
+      setCurrentSubscription(newSubscription);
+      
+      // Also save to localStorage as backup
+      localStorage.setItem(`subscription_${user.id}`, JSON.stringify(newSubscription));
+      
+      toast.success(`Successfully upgraded to ${plan.name} plan!`);
+    } catch (error: any) {
+      console.error('Error upgrading plan:', error);
+      toast.error('Failed to upgrade plan');
+    }
   };
 
   const cancelSubscription = async () => {
     if (!currentSubscription) return;
 
-    const updatedSubscription = {
-      ...currentSubscription,
-      status: 'cancelled' as const,
-      updatedAt: Date.now(),
-    };
+    try {
+      const updatedSubscription = {
+        ...currentSubscription,
+        status: 'cancelled' as const,
+        updatedAt: Date.now(),
+      };
 
-    setCurrentSubscription(updatedSubscription);
-    localStorage.setItem(`subscription_${user?.id}`, JSON.stringify(updatedSubscription));
-    
-    toast.success('Subscription cancelled successfully');
+      // Update in Supabase
+      const { error } = await supabase
+        .from('user_subscriptions')
+        .update({
+          status: 'cancelled',
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', currentSubscription.id);
+
+      if (error) throw error;
+
+      setCurrentSubscription(updatedSubscription);
+      
+      // Also save to localStorage as backup
+      localStorage.setItem(`subscription_${user?.id}`, JSON.stringify(updatedSubscription));
+      
+      toast.success('Subscription cancelled successfully');
+    } catch (error: any) {
+      console.error('Error cancelling subscription:', error);
+      toast.error('Failed to cancel subscription');
+    }
   };
 
   const isFeatureEnabled = (feature: keyof Plan['features']) => {
@@ -139,6 +304,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
   return (
     <SubscriptionContext.Provider
       value={{
+        loading,
         currentSubscription,
         currentPlan,
         availablePlans,
