@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase, checkTableExists } from '../lib/supabase';
-import { useAuth } from './AuthContext';
+import { useAuth } from './AuthContext'; // Keep this import
 import { Plan, Coupon, UserProfile, UserStats, FlashcardCategory, Flashcard } from '../types';
 import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
@@ -359,7 +359,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     ];
 
   // Save admin data to Supabase
-  const saveGenericAdminData = async (dataType: string, data: any) => {
+  const saveGenericAdminData = async (dataType: string, data: any, tableName: string) => {
     if (!user || !isAdmin(user.email || '')) return;
 
     // Check if the table exists first
@@ -372,7 +372,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
     try {
       const { error } = await supabase
-        .from('admin_data')
+        .from(tableName)
         .upsert({
           data_type: dataType,
           data_key: 'default',
@@ -391,6 +391,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       toast('Data saved locally. Will sync when connection is restored.', { icon: '⚠️' });
     }
   };
+
 
   // Helper function to save categories to their dedicated table
   const saveCategoriesToSupabase = async (data: FlashcardCategory[]) => {
@@ -467,11 +468,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   };
 
   // Generic save function (now calls specific helpers)
-  const saveAdminData = async (dataType: string, data: any) => {
+  const saveAdminData = async (dataType: string, data: any) => { // This function will now dispatch to specific save functions
     if (dataType === 'categories') {
       await saveCategoriesToSupabase(data);
     } else if (dataType === 'flashcards') {
       await saveFlashcardsToSupabase(data);
+    } else if (dataType === 'plans') {
+      await savePlansToSupabase(data);
+    } else if (dataType === 'coupons') {
+      await saveCouponsToSupabase(data);
     } else {
       await saveGenericAdminData(dataType, data);
     }
@@ -487,14 +492,18 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const loadAdminData = async () => {
     if (!user || !isAdmin(user.email || '')) {
       setLoading(false);
+      // Set default data for non-admin users or when not logged in
+      setPlans(getDefaultPlans());
+      setCategories(getDefaultCategories());
+      setFlashcards(getDefaultFlashcards());
       return;
     }
 
-    // Check if the table exists first
-    const tableExists = await checkTableExists('admin_data');
-    if (!tableExists) {
-      console.warn('admin_data table does not exist, using localStorage');
-      try {
+    try {
+      setLoading(true);
+      const adminDataTableExists = await checkTableExists('admin_data');
+      if (!adminDataTableExists) {
+        console.warn('admin_data table does not exist, using localStorage');
         const savedPlans = localStorage.getItem('admin_plans');
         const savedCoupons = localStorage.getItem('admin_coupons');
         const savedUsers = localStorage.getItem('admin_users');
@@ -505,15 +514,106 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         setCoupons(savedCoupons ? JSON.parse(savedCoupons) : []);
         setUsers(savedUsers ? JSON.parse(savedUsers) : []);
         setCategories(savedCategories ? JSON.parse(savedCategories) : getDefaultCategories());
-        
+        setFlashcards(savedFlashcards ? JSON.parse(savedFlashcards) : getDefaultFlashcards());
         toast('Using local data. Database tables not found.', { icon: '⚠️' });
-      } catch {
-        // Use defaults if localStorage also fails
-        setPlans(getDefaultPlans());
-        setCoupons([]);
-        setUsers([]);
-        setCategories(getDefaultCategories());
-        setFlashcards(getDefaultFlashcards());
+        setLoading(false);
+        return;
+      }
+
+      // Load plans from dedicated table
+      const plansTableExists = await checkTableExists('plans');
+      if (plansTableExists) {
+        const { data: loadedPlans, error: plansError } = await supabase
+          .from('plans')
+          .select('*');
+        if (plansError) throw plansError;
+        setPlans(loadedPlans.map(p => ({
+          id: p.id,
+          name: p.name,
+          description: p.description,
+          price: p.price,
+          currency: p.currency,
+          billingPeriod: p.billing_period,
+          features: p.features,
+          isActive: p.is_active,
+          createdAt: new Date(p.created_at).getTime(),
+          updatedAt: new Date(p.updated_at).getTime(),
+        })) || getDefaultPlans());
+      } else {
+        setPlans(loadFromLocalStorage('admin_plans', getDefaultPlans()));
+      }
+
+      // Load coupons from dedicated table
+      const couponsTableExists = await checkTableExists('coupons');
+      if (couponsTableExists) {
+        const { data: loadedCoupons, error: couponsError } = await supabase
+          .from('coupons')
+          .select('*');
+        if (couponsError) throw couponsError;
+        setCoupons(loadedCoupons.map(c => ({
+          id: c.id,
+          code: c.code,
+          description: c.description,
+          discountPercentage: c.discount_percentage,
+          applicablePlans: c.applicable_plans,
+          isActive: c.is_active,
+          expiresAt: c.expires_at ? new Date(c.expires_at).getTime() : undefined,
+          usageLimit: c.usage_limit,
+          usedCount: c.used_count,
+          createdAt: new Date(c.created_at).getTime(),
+          updatedAt: new Date(c.updated_at).getTime(),
+        })) || []);
+      } else {
+        setCoupons(loadFromLocalStorage('admin_coupons', []));
+      }
+
+      // Load users from admin_data (still generic for now)
+      const { data: loadedUsers, error: usersError } = await supabase.from('admin_data').select('*').eq('data_type', 'users');
+      if (usersError) throw usersError;
+      setUsers(loadedUsers?.[0]?.data_value || []);
+
+      // Load categories from dedicated table
+      const categoriesTableExists = await checkTableExists('flashcard_categories');
+      if (categoriesTableExists) {
+        const { data: loadedCategories, error: categoriesError } = await supabase
+          .from('flashcard_categories')
+          .select('*');
+        if (categoriesError) throw categoriesError;
+        setCategories(loadedCategories.map(c => ({
+          id: c.id,
+          name: c.name,
+          description: c.description,
+          color: c.color,
+          icon: c.icon,
+          ageGroup: c.age_group,
+          modelUrl: c.model_url,
+          createdAt: new Date(c.created_at).getTime()
+        })) || getDefaultCategories());
+      } else {
+        setCategories(loadFromLocalStorage('admin_categories', getDefaultCategories()));
+      }
+
+      // Load flashcards from dedicated table
+      const flashcardsTableExists = await checkTableExists('flashcards');
+      if (flashcardsTableExists) {
+        const { data: loadedFlashcards, error: flashcardsError } = await supabase
+          .from('flashcards')
+          .select('*');
+        if (flashcardsError) throw flashcardsError;
+        setFlashcards(loadedFlashcards.map(f => ({
+          id: f.id,
+          categoryId: f.category_id,
+          title: f.title,
+          description: f.description,
+          imageUrl: f.image_url,
+          soundUrl: f.sound_url,
+          pronunciation: f.pronunciation,
+          spelling: f.spelling,
+          difficulty: f.difficulty,
+          createdAt: new Date(f.created_at).getTime()
+        })) || getDefaultFlashcards());
+      } else {
+        setFlashcards(loadFromLocalStorage('admin_flashcards', getDefaultFlashcards()));
       }
     }
 
@@ -591,13 +691,15 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   // Migrate localStorage data to Supabase
   const migrateAdminData = async () => {
     if (!user || !isAdmin(user.email || '')) return;
-
+  
     try {
       const migrations = [
-        { key: 'admin_plans', dataType: 'plans', data: plans },
-        { key: 'admin_coupons', dataType: 'coupons', data: coupons },
-        { key: 'admin_users', dataType: 'users', data: users },
+        { key: 'admin_users', dataType: 'users', data: users, tableName: 'admin_data' }, // Users still in admin_data
       ];
+  
+      // Check if plans table exists before attempting to migrate plans
+      const plansTableExists = await checkTableExists('plans');
+      const couponsTableExists = await checkTableExists('coupons');
 
       for (const migration of migrations) {
         const localData = localStorage.getItem(migration.key);
@@ -605,6 +707,24 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           const parsedData = JSON.parse(localData);
           await saveGenericAdminData(migration.dataType, parsedData);
           localStorage.removeItem(migration.key);
+        }
+      }
+  
+      // Migrate plans
+      if (plansTableExists) {
+        const localPlans = localStorage.getItem('admin_plans');
+        if (localPlans) {
+          const parsedPlans = JSON.parse(localPlans);
+          await savePlansToSupabase(parsedPlans);
+          localStorage.removeItem('admin_plans');
+        }
+      }
+      if (couponsTableExists) {
+        const localCoupons = localStorage.getItem('admin_coupons');
+        if (localCoupons) {
+          const parsedCoupons = JSON.parse(localCoupons);
+          await saveCouponsToSupabase(parsedCoupons);
+          localStorage.removeItem('admin_coupons');
         }
       }
       
@@ -640,6 +760,30 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   }, [user]);
 
+  // Helper function to save plans to their dedicated table
+  const savePlansToSupabase = async (data: Plan[]) => {
+    if (!user || !isAdmin(user.email || '')) return;
+    const tableExists = await checkTableExists('plans');
+    if (!tableExists) {
+      localStorage.setItem('admin_plans', JSON.stringify(data));
+      return;
+    }
+    try {
+      await supabase.from('plans').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error } = await supabase.from('plans').insert(data.map(p => ({
+        id: p.id, name: p.name, description: p.description, price: p.price, currency: p.currency,
+        billing_period: p.billingPeriod, features: p.features, is_active: p.isActive,
+        created_at: new Date(p.createdAt).toISOString(), updated_at: new Date(p.updatedAt).toISOString()
+      })));
+      if (error) throw error;
+      localStorage.setItem('admin_plans', JSON.stringify(data));
+    } catch (error: any) {
+      console.error('Error saving plans:', error);
+      localStorage.setItem('admin_plans', JSON.stringify(data));
+      toast('Plans saved locally. Will sync when connection is restored.', { icon: '⚠️' });
+    }
+  };
+
   const addPlan = (plan: Omit<Plan, 'id' | 'createdAt' | 'updatedAt'>) => {
     const newPlan: Plan = {
       ...plan,
@@ -647,30 +791,55 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
-    const updatedPlans = [...plans, newPlan];
-    setPlans(updatedPlans);
-    saveAdminData('plans', updatedPlans);
+    const updatedPlans = [...plans, newPlan]; // Update local state
+    setPlans(updatedPlans); 
+    savePlansToSupabase(updatedPlans); // Persist to Supabase
     toast.success('Plan added successfully');
   };
 
   const updatePlan = (id: string, updates: Partial<Plan>) => {
     const updatedPlans = plans.map(plan =>
         plan.id === id ? { ...plan, ...updates, updatedAt: Date.now() } : plan
-    );
-    setPlans(updatedPlans);
-    saveAdminData('plans', updatedPlans);
+    ); // Update local state
+    setPlans(updatedPlans); 
+    savePlansToSupabase(updatedPlans); // Persist to Supabase
     toast.success('Plan updated successfully');
   };
 
   const deletePlan = (id: string) => {
-    const updatedPlans = plans.filter(plan => plan.id !== id);
-    setPlans(updatedPlans);
-    saveAdminData('plans', updatedPlans);
+    const updatedPlans = plans.filter(plan => plan.id !== id); // Update local state
+    setPlans(updatedPlans); 
+    savePlansToSupabase(updatedPlans); // Persist to Supabase
     toast.success('Plan deleted successfully');
   };
 
   const getPlanById = (id: string) => {
     return plans.find(plan => plan.id === id);
+  };
+
+  // Helper function to save coupons to their dedicated table
+  const saveCouponsToSupabase = async (data: Coupon[]) => {
+    if (!user || !isAdmin(user.email || '')) return;
+    const tableExists = await checkTableExists('coupons');
+    if (!tableExists) {
+      localStorage.setItem('admin_coupons', JSON.stringify(data));
+      return;
+    }
+    try {
+      await supabase.from('coupons').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error } = await supabase.from('coupons').insert(data.map(c => ({
+        id: c.id, code: c.code, description: c.description, discount_percentage: c.discountPercentage,
+        applicable_plans: c.applicablePlans, is_active: c.isActive, expires_at: c.expiresAt ? new Date(c.expiresAt).toISOString() : null,
+        usage_limit: c.usageLimit, used_count: c.usedCount,
+        created_at: new Date(c.createdAt).toISOString(), updated_at: new Date(c.updatedAt).toISOString()
+      })));
+      if (error) throw error;
+      localStorage.setItem('admin_coupons', JSON.stringify(data));
+    } catch (error: any) {
+      console.error('Error saving coupons:', error);
+      localStorage.setItem('admin_coupons', JSON.stringify(data));
+      toast('Coupons saved locally. Will sync when connection is restored.', { icon: '⚠️' });
+    }
   };
 
   const addCoupon = (coupon: Omit<Coupon, 'id' | 'createdAt' | 'updatedAt' | 'usedCount'>) => {
@@ -680,26 +849,26 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       usedCount: 0,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    };
-    const updatedCoupons = [...coupons, newCoupon];
-    setCoupons(updatedCoupons);
-    saveAdminData('coupons', updatedCoupons);
+    }; // Update local state
+    const updatedCoupons = [...coupons, newCoupon]; 
+    setCoupons(updatedCoupons); 
+    saveCouponsToSupabase(updatedCoupons); // Persist to Supabase
     toast.success('Coupon added successfully');
   };
 
   const updateCoupon = (id: string, updates: Partial<Coupon>) => {
     const updatedCoupons = coupons.map(coupon =>
         coupon.id === id ? { ...coupon, ...updates, updatedAt: Date.now() } : coupon
-    );
-    setCoupons(updatedCoupons);
-    saveAdminData('coupons', updatedCoupons);
+    ); // Update local state
+    setCoupons(updatedCoupons); 
+    saveCouponsToSupabase(updatedCoupons); // Persist to Supabase
     toast.success('Coupon updated successfully');
   };
 
   const deleteCoupon = (id: string) => {
-    const updatedCoupons = coupons.filter(coupon => coupon.id !== id);
-    setCoupons(updatedCoupons);
-    saveAdminData('coupons', updatedCoupons);
+    const updatedCoupons = coupons.filter(coupon => coupon.id !== id); // Update local state
+    setCoupons(updatedCoupons); 
+    saveCouponsToSupabase(updatedCoupons); // Persist to Supabase
     toast.success('Coupon deleted successfully');
   };
 
