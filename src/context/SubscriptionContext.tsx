@@ -108,7 +108,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const subscription: UserSubscription = {
           id: data.id,
           userId: data.user_id,
-          planId: data.plan_id,
+          planId: data.plan_name, // Use plan_name from database
           status: data.status,
           startDate: new Date(data.start_date).getTime(),
           endDate: data.end_date ? new Date(data.end_date).getTime() : Date.now() + (365 * 24 * 60 * 60 * 1000),
@@ -137,7 +137,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
             .insert({
               id: defaultSubscription.id,
               user_id: defaultSubscription.userId,
-              plan_id: defaultSubscription.planId,
+              plan_name: defaultSubscription.planId, // Use plan_name in database
               status: defaultSubscription.status,
               start_date: new Date(defaultSubscription.startDate).toISOString(),
               end_date: new Date(defaultSubscription.endDate).toISOString(),
@@ -208,7 +208,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
           .upsert({
             id: subscription.id,
             user_id: subscription.userId,
-            plan_id: subscription.planId,
+            plan_name: subscription.planId, // Use plan_name in database
             status: subscription.status,
             start_date: new Date(subscription.startDate).toISOString(),
             end_date: subscription.endDate ? new Date(subscription.endDate).toISOString() : null,
@@ -290,7 +290,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         .upsert({
           id: newSubscription.id,
           user_id: newSubscription.userId,
-          plan_id: newSubscription.planId,
+          plan_name: newSubscription.planId, // Use plan_name in database
           status: newSubscription.status,
           start_date: new Date(newSubscription.startDate).toISOString(),
           end_date: new Date(newSubscription.endDate).toISOString(),
