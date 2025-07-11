@@ -3,6 +3,7 @@ import { Plan, UserSubscription, Coupon } from '../types';
 import { useAuth } from './AuthContext';
 import { useAdmin } from './AdminContext';
 import { supabase, checkTableExists } from '../lib/supabase';
+import { v4 as uuidv4 } from 'uuid';
 import toast from 'react-hot-toast';
 
 interface SubscriptionContextType {
@@ -58,7 +59,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
           const freePlan = plans.find(plan => plan.name === 'Free');
           if (freePlan) {
             const defaultSubscription: UserSubscription = {
-              id: `sub_${user.id}`,
+              id: uuidv4(),
               userId: user.id,
               planId: freePlan.id,
               status: 'active',
@@ -76,7 +77,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const freePlan = plans.find(plan => plan.name === 'Free');
         if (freePlan) {
           const defaultSubscription: UserSubscription = {
-            id: `sub_${user.id}`,
+            id: uuidv4(),
             userId: user.id,
             planId: freePlan.id,
             status: 'active',
@@ -121,7 +122,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const freePlan = plans.find(plan => plan.name === 'Free');
         if (freePlan) {
           const defaultSubscription: UserSubscription = {
-            id: `sub_${user.id}`,
+            id: uuidv4(),
             userId: user.id,
             planId: freePlan.id,
             status: 'active',
@@ -159,7 +160,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
           const freePlan = plans.find(plan => plan.name === 'Free');
           if (freePlan) {
             const defaultSubscription: UserSubscription = {
-              id: `sub_${user.id}`,
+              id: uuidv4(),
               userId: user.id,
               planId: freePlan.id,
               status: 'active',
@@ -177,7 +178,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const freePlan = plans.find(plan => plan.name === 'Free');
         if (freePlan) {
           const defaultSubscription: UserSubscription = {
-            id: `sub_${user.id}`,
+            id: uuidv4(),
             userId: user.id,
             planId: freePlan.id,
             status: 'active',
@@ -274,7 +275,7 @@ export const SubscriptionProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       // Create new subscription
       const newSubscription: UserSubscription = {
-        id: `sub_${user.id}_${Date.now()}`,
+        id: uuidv4(),
         userId: user.id,
         planId: plan.id,
         status: 'active',
