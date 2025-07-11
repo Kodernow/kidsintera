@@ -1,8 +1,8 @@
 
 public/*
-src/components/admin/*
-src/pages/admin/*
-src/pages/auth/*
+#src/components/admin/*
+#src/pages/admin/*
+#src/pages/auth/*
 src/pages/Landing.css
 src/pages/Landing.tsx
 src/pages/Pricing.css
