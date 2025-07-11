@@ -122,11 +122,11 @@ export interface Flashcard {
 interface TodoContextType {
   todos: Todo[];
   loading: boolean;
-  addTodo: (todo: Omit<Todo, 'id' | 'createdAt'>) => void;
-  updateTodo: (id: string, updates: Partial<Todo>) => void;
-  deleteTodo: (id: string) => void;
+  addTodo: (todo: Omit<Todo, 'id' | 'createdAt'>) => Promise<void>;
+  updateTodo: (id: string, updates: Partial<Todo>) => Promise<void>;
+  deleteTodo: (id: string) => Promise<void>;
   getTodosByStatus: (status: TodoStatus) => Todo[];
-  moveTodoToStatus: (id: string, newStatus: TodoStatus) => void;
+  moveTodoToStatus: (id: string, newStatus: TodoStatus) => Promise<void>;
   loadTodos: () => Promise<void>;
 }
 

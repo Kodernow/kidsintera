@@ -7,11 +7,11 @@ import toast from 'react-hot-toast';
 
 interface TodoContextType {
   todos: Todo[];
-  addTodo: (todo: Omit<Todo, 'id' | 'createdAt'>) => void;
-  updateTodo: (id: string, updates: Partial<Todo>) => void;
-  deleteTodo: (id: string) => void;
+  addTodo: (todo: Omit<Todo, 'id' | 'createdAt'>) => Promise<void>;
+  updateTodo: (id: string, updates: Partial<Todo>) => Promise<void>;
+  deleteTodo: (id: string) => Promise<void>;
   getTodosByStatus: (status: TodoStatus) => Todo[];
-  moveTodoToStatus: (id: string, newStatus: TodoStatus) => void;
+  moveTodoToStatus: (id: string, newStatus: TodoStatus) => Promise<void>;
 }
 
 const TodoContext = createContext<TodoContextType | undefined>(undefined);
@@ -123,7 +123,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
-  const addTodo = (todo: Omit<Todo, 'id' | 'createdAt'>) => {
+  const addTodo = async (todo: Omit<Todo, 'id' | 'createdAt'>) => {
     if (!user) {
       toast.error('Please sign in to add todos');
       return;
@@ -157,7 +157,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const updateTodo = (id: string, updates: Partial<Todo>) => {
+  const updateTodo = async (id: string, updates: Partial<Todo>) => {
     if (!user) {
       toast.error('Please sign in to update todos');
       return;
@@ -194,7 +194,7 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const deleteTodo = (id: string) => {
+  const deleteTodo = async (id: string) => {
     if (!user) {
       toast.error('Please sign in to delete todos');
       return;
@@ -221,8 +221,8 @@ export const TodoProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return todos.filter(todo => todo.status === status);
   };
 
-  const moveTodoToStatus = (id: string, newStatus: TodoStatus) => {
-    updateTodo(id, { status: newStatus });
+  const moveTodoToStatus = async (id: string, newStatus: TodoStatus) => {
+    await updateTodo(id, { status: newStatus });
   };
 
   return (
