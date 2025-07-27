@@ -414,7 +414,7 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       // Perform object detection
       const predictions = await modelRef.current!.detect(videoElement);
-      
+      const predictionDetails: string[] = [];  // List of all the objects. 
       // Filter predictions with confidence > 0.5 and map to flashcard objects
       const detectedObjects: string[] = [];
       
@@ -422,9 +422,18 @@ export const FlashcardProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         if (prediction.score > 0.5) {
           const mappedObjects = mapObjectToFlashcard(prediction.class);
           detectedObjects.push(...mappedObjects);
+
+          predictionDetails.push(`${prediction.class} (${(prediction.score * 100).toFixed(1)}%)`);
+          
         }
       });
-
+      // Display a single toast message with all identified objects and their scores
+      if (predictionDetails.length > 0) {
+        const message = `Detected: ${predictionDetails.join(', ')}`;
+        toast.success(message, {
+        duration: 5000, // Optional: increase duration to allow user to read
+       });
+      } 
       // Remove duplicates and return
       return [...new Set(detectedObjects)];
     } catch (error) {
