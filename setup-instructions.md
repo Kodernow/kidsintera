@@ -134,3 +134,75 @@ After running the SQL migration, you can verify the tables were created by:
    - `admin_users`
 
 If you don't see these tables, the SQL migration didn't run successfully. Try running it again.
+
+
+Logic of Object Detection : 
+
+sequenceDiagram
+    participant User
+    participant FlashcardSettings
+    participant FlashcardContext
+    participant BrowserAPI
+    participant TensorFlowJS
+    participant TesseractJS
+    participant QRScanner
+
+    User->>FlashcardSettings: Clicks "Objects" toggle button
+    FlashcardSettings->>FlashcardContext: calls toggleCameraDetection()
+    FlashcardContext-->>FlashcardContext: updates cameraDetectionEnabled state
+    FlashcardContext->>FlashcardContext: (if cameraDetectionEnabled is true and not already detecting) calls startCameraDetection()
+    FlashcardContext->>FlashcardContext: startCameraDetection() checks if camera features are enabled
+    FlashcardContext->>FlashcardContext: startCameraDetection() calls loadModel()
+    FlashcardContext->>TensorFlowJS: loadModel() loads COCO-SSD model
+    TensorFlowJS-->>FlashcardContext: Model loaded
+    FlashcardContext->>BrowserAPI: startCameraDetection() requests navigator.mediaDevices.getUserMedia()
+    BrowserAPI-->>FlashcardContext: Provides MediaStream (camera feed)
+    FlashcardContext->>FlashcardContext: startCameraDetection() sets up video element and starts detection interval
+    loop Detection Loop (e.g., every 3 seconds)
+        FlashcardContext->>FlashcardContext: Calls detectObjects(videoFrame)
+        FlashcardContext->>TensorFlowJS: detectObjects() sends videoFrame to loaded model
+        TensorFlowJS-->>FlashcardContext: Returns detected objects (e.g., "cat", "square")
+        FlashcardContext->>FlashcardContext: detectObjects() calls mapObjectToFlashcard() for each detected object
+        FlashcardContext-->>FlashcardContext: Updates detectedObjects state
+        alt If OCR enabled
+            FlashcardContext->>FlashcardContext: Calls detectText(videoFrame)
+            FlashcardContext->>TesseractJS: detectText() sends videoFrame for OCR
+            TesseractJS-->>FlashcardContext: Returns detected text
+            FlashcardContext-->>FlashcardContext: Updates detectedText state
+        end
+        alt If QR Code enabled
+            FlashcardContext->>FlashcardContext: Calls detectQRCodes(videoFrame)
+            FlashcardContext->>QRScanner: detectQRCodes() sends videoFrame for QR scan
+            QRScanner-->>FlashcardContext: Returns detected QR codes
+            FlashcardContext-->>FlashcardContext: Updates detectedQRCodes state
+        end
+        FlashcardContext->>FlashcardContext: (if sound enabled) Plays sound/spells for detected flashcards
+    end
+
+The image detection on the /flashcards page, particularly in "Camera Mode," is implemented using a combination of client-side machine learning libraries to perform object detection, optical character recognition (OCR), and QR code scanning.
+
+Here's a breakdown of how it works and the libraries used:
+
+Object Detection (TensorFlow.js and COCO-SSD):
+
+TensorFlow.js (@tensorflow/tfjs): This is a JavaScript library for training and deploying machine learning models in the browser. It provides the core capabilities for running the object detection model.
+COCO-SSD (@tensorflow-models/coco-ssd): This is a pre-trained object detection model, part of the TensorFlow.js models collection. It's capable of detecting a wide variety of common objects (like "cat," "dog," "cow," "bird," "apple," "square," "circle," etc.) in images and video streams.
+How it works: When "Camera Mode" is active and "Objects" detection is enabled, the application accesses the user's camera feed. This video stream is continuously fed into the COCO-SSD model. The model then analyzes each frame to identify objects it has been trained to recognize. If an object is detected with a high enough confidence score, its class (e.g., "cat") is captured. The application then attempts to match this detected object class to the titles of your flashcards.
+Optical Character Recognition (OCR) (Tesseract.js):
+
+Tesseract.js (tesseract.js): This is a JavaScript library that uses the Tesseract OCR engine (originally developed by Google) to recognize text in images.
+How it works: When "Camera Mode" is active and "Text" recognition is enabled, the application captures frames from the camera feed. These frames are then processed by Tesseract.js to extract any readable text. The extracted text is then compared against the titles of your flashcards to find a match.
+QR Code Scanning (QR-Scanner):
+
+QR-Scanner (qr-scanner): This is a fast and simple JavaScript library for scanning QR codes from images or video streams.
+How it works: When "Camera Mode" is active and "QR Code" scanning is enabled, the library continuously scans the camera feed for QR codes. If a QR code is detected, its decoded data (which could be a URL, a flashcard ID, or a word) is extracted. The application then checks if this data matches any flashcard titles or links.
+Integration in FlashcardContext.tsx:
+
+All of these detection mechanisms are orchestrated within the src/context/FlashcardContext.tsx file. This context manages:
+
+Camera Access: Initiating and stopping the camera stream.
+Model Loading: Loading the TensorFlow.js and COCO-SSD models.
+Detection Loop: Running a continuous loop that captures video frames and passes them to the respective detection libraries (TensorFlow.js for objects, Tesseract.js for OCR, QR-Scanner for QR codes).
+Result Processing: Collecting the detected objects, text, and QR codes, and then attempting to match them with your predefined flashcards.
+Settings: Managing user preferences for sound, spelling, and enabling/disabling each detection type.
+This setup allows the application to provide an interactive learning experience where physical objects, text, or QR codes can trigger the display and pronunciation of corresponding flashcards.
