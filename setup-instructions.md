@@ -18,7 +18,7 @@ The project works best with Supabase for data storage:
    - Go to Authentication > Users in your Supabase dashboard
    - Click "Add user"
    - Email: `admin@admin.com`
-   - Password: `admin123` (or your preferred password)
+   - Password: `admin` (or your preferred password)
    - Click "Add user"
    - ⚠️ This step must be done BEFORE running the SQL migration
 
